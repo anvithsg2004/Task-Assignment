@@ -6,4 +6,4 @@ spring:
     name: user-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/TASK-USER
+      uri: mongodb://localhost:27017/USER
