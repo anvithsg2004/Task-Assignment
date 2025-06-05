@@ -3,9 +3,9 @@ package com.anvith.user_service.service;
 import com.anvith.user_service.config.JwtProvider;
 import com.anvith.user_service.entity.User;
 import com.anvith.user_service.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
@@ -18,11 +18,7 @@ public class UserService {
     @Autowired
     private JwtProvider jwtProvider;
 
-    @Autowired
-    private HttpServletRequest request; // Injected to access headers
-
-    public User getUserProfile() {
-        String authHeader = request.getHeader("Authorization");
+    public User getUserProfile(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             System.err.println("Invalid Authorization header: " + authHeader); // Debug log
             throw new IllegalArgumentException("Missing or invalid Authorization header");
