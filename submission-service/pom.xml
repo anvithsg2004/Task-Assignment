@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.anvith</groupId>
-    <artifactId>task-service</artifactId>
+    <artifactId>submission-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>task-service</name>
-    <description>Task Service</description>
+    <name>submission-service</name>
+    <description>Submission Service for Task Project</description>
     <url/>
     <licenses>
         <license/>
@@ -41,15 +41,17 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
 
         <dependency>
