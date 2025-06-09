@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 public class Submission {
 
     @Id
-    private Long id;
+    private String id; // Changed from Long to String
 
     private String taskId;
 
     private String gitHubLink;
 
-    private Long userId;
+    private String userId; // Already String, consistent with User entity's id
 
     private String status = "PENDING";
 
@@ -27,11 +27,11 @@ public class Submission {
 
     // Getters and Setters
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -51,11 +51,11 @@ public class Submission {
         this.gitHubLink = gitHubLink;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

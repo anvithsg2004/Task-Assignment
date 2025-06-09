@@ -23,55 +23,43 @@ public class SubmissionService {
     @Autowired
     private UserServiceClient userServiceClient;
 
-    public Submission submitTask(String taskId, String GitHubLink, Long userId, String jwt) throws Exception {
-
+    public Submission submitTask(String taskId, String gitHubLink, String userId, String jwt) throws Exception {
         Task task = taskServiceClient.getTaskById(taskId, jwt);
 
         if (task != null) {
             Submission submission = new Submission();
-
             submission.setTaskId(taskId);
             submission.setUserId(userId);
-            submission.setGitHubLink(GitHubLink);
+            submission.setGitHubLink(gitHubLink);
             submission.setSubmissionTime(LocalDateTime.now());
 
             return submissionRepository.save(submission);
         }
 
-        throw new Exception("Task Not Found with ID : " + taskId);
-
+        throw new Exception("Task Not Found with ID: " + taskId);
     }
 
-    public Submission getTaskSubmissionById(Long submissionId, String jwt) throws Exception {
-
-        return submissionRepository.findById(submissionId).orElseThrow(() -> new Exception("Task Submission Not Found with ID : " + submissionId));
-
+    public Submission getTaskSubmissionById(String submissionId, String jwt) throws Exception {
+        return submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new Exception("Task Submission Not Found with ID: " + submissionId));
     }
 
     public List<Submission> getAllTaskSubmission(String jwt) {
-
         return submissionRepository.findAll();
-
     }
 
     public List<Submission> getTaskSubmissionsByTaskId(String taskId, String jwt) {
-
-        return submissionRepository.findByTaskId(Long.valueOf(taskId));
-
+        return submissionRepository.findByTaskId(taskId);
     }
 
-    public Submission acceptDeclineSubmission(Long taskId, String status, String jwt) throws Exception {
-
-        Submission submission = getTaskSubmissionById(taskId, jwt);
-
+    public Submission acceptDeclineSubmission(String submissionId, String status, String jwt) throws Exception {
+        Submission submission = getTaskSubmissionById(submissionId, jwt);
         submission.setStatus(status);
 
-        if (status.equals("DONE")) {
+        if ("DONE".equals(status)) {
             taskServiceClient.completeTask(submission.getTaskId(), jwt);
         }
 
         return submissionRepository.save(submission);
-
     }
-
 }

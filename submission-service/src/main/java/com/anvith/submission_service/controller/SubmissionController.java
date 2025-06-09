@@ -27,50 +27,40 @@ public class SubmissionController {
 
     @PostMapping("/submit-task")
     public ResponseEntity<Submission> submitTask(
-            @RequestParam Long taskId,
+            @RequestParam String taskId,
             @RequestParam String gitHubLink,
             @RequestHeader("Authorization") String jwt
     ) throws Exception {
-
         User user = userServiceClient.getUserProfile(jwt);
-
-        Submission submission = submissionService.submitTask(String.valueOf(taskId), gitHubLink, Long.parseLong(user.getId()), jwt);
-
+        Submission submission = submissionService.submitTask(taskId, gitHubLink, user.getId(), jwt);
         return new ResponseEntity<>(submission, HttpStatus.CREATED);
-
     }
 
     @GetMapping("/get-all-submissions")
     public ResponseEntity<List<Submission>> getAllSubmissions(@RequestHeader("Authorization") String jwt) throws Exception {
-
         User user = userServiceClient.getUserProfile(jwt);
-
         List<Submission> submissions = submissionService.getAllTaskSubmission(jwt);
-
         return new ResponseEntity<>(submissions, HttpStatus.OK);
-
     }
 
     @GetMapping("/get-task-submissions-by-task-id/{taskId}")
-    public ResponseEntity<List<Submission>> getTaskSubmissionsByTaskId(@PathVariable Long taskId, @RequestHeader("Authorization") String jwt) throws Exception {
-
+    public ResponseEntity<List<Submission>> getTaskSubmissionsByTaskId(
+            @PathVariable String taskId,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
         User user = userServiceClient.getUserProfile(jwt);
-
-        List<Submission> submissions = submissionService.getTaskSubmissionsByTaskId(String.valueOf(taskId), jwt);
-
+        List<Submission> submissions = submissionService.getTaskSubmissionsByTaskId(taskId, jwt);
         return new ResponseEntity<>(submissions, HttpStatus.OK);
-
     }
 
-    @PutMapping("/accept-decline-submission")
-    public ResponseEntity<Submission> acceptDeclineSubmission(@PathVariable Long taskId, @RequestParam("status") String status, @RequestHeader("Authorization") String jwt) throws Exception {
-
+    @PutMapping("/accept-decline-submission/{submissionId}")
+    public ResponseEntity<Submission> acceptDeclineSubmission(
+            @PathVariable String submissionId, // Changed to String
+            @RequestParam("status") String status,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
         User user = userServiceClient.getUserProfile(jwt);
-
-        Submission submission = submissionService.acceptDeclineSubmission(taskId, status, jwt);
-
+        Submission submission = submissionService.acceptDeclineSubmission(submissionId, status, jwt);
         return new ResponseEntity<>(submission, HttpStatus.OK);
-
     }
-
 }
