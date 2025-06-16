@@ -1,0 +1,2405 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Tab } from '@headlessui/react';
+import { 
+  CheckSquare, 
+  Clock, 
+  CheckCircle, 
+  Upload,
+  TrendingUp,
+  Users
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { taskAPI, submissionAPI } from '../api';
+import CardStat from '../components/CardStat';
+import TaskTable from '../components/TaskTable';
+import UserManagement from '../components/UserManagement';
+import LoaderPlanet from '../components/LoaderPlanet';
+
+const Dashboard = () => {
+  const { user, isAdmin } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalTasks: 0,
+    pendingTasks: 0,
+    doneTasks: 0,
+    pendingSubmissions: 0,
+  });
+  const [recentTasks, setRecentTasks] = useState([]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        if (isAdmin()) {
+          // Admin dashboard data
+          const [allTasks, pendingTasks, submissions] = await Promise.all([
+            taskAPI.getAllTasks(),
+            taskAPI.getAllTasks('PENDING'),
+            submissionAPI.getAllSubmissions(),
+          ]);
+
+          // Handle paginated responses
+          const allTasksData = allTasks.data.content || allTasks.data || [];
+          const pendingTasksData = pendingTasks.data.content || pendingTasks.data || [];
+          const submissionsData = submissions.data.content || submissions.data || [];
+
+          const doneTasks = allTasksData.filter(task => task.status === 'DONE');
+          const pendingSubmissions = submissionsData.filter(sub => sub.status === 'PENDING');
+
+          setStats({
+            totalTasks: allTasksData.length,
+            pendingTasks: pendingTasksData.length,
+            doneTasks: doneTasks.length,
+            pendingSubmissions: pendingSubmissions.length,
+          });
+
+          setRecentTasks(allTasksData.slice(0, 6));
+        } else {
+          // User dashboard data - get visible tasks for the user
+          const visibleTasks = await taskAPI.getVisibleTasks();
+          const visibleTasksData = visibleTasks.data.content || visibleTasks.data || [];
+          
+          const pendingTasks = visibleTasksData.filter(task => task.status === 'PENDING');
+          const assignedTasks = visibleTasksData.filter(task => task.status === 'ASSIGNED');
+          const doneTasks = visibleTasksData.filter(task => task.status === 'DONE');
+
+          setStats({
+            totalTasks: visibleTasksData.length,
+            pendingTasks: pendingTasks.length,
+            assignedTasks: assignedTasks.length,
+            doneTasks: doneTasks.length,
+          });
+
+          setRecentTasks(visibleTasksData.slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user, isAdmin]);
+
+  const refreshDashboard = () => {
+    setLoading(true);
+    const fetchDashboardData = async () => {
+      try {
+        if (isAdmin()) {
+          const [allTasks, pendingTasks, submissions] = await Promise.all([
+            taskAPI.getAllTasks(),
+            taskAPI.getAllTasks('PENDING'),
+            submissionAPI.getAllSubmissions(),
+          ]);
+
+          const allTasksData = allTasks.data.content || allTasks.data || [];
+          const pendingTasksData = pendingTasks.data.content || pendingTasks.data || [];
+          const submissionsData = submissions.data.content || submissions.data || [];
+
+          const doneTasks = allTasksData.filter(task => task.status === 'DONE');
+          const pendingSubmissions = submissionsData.filter(sub => sub.status === 'PENDING');
+
+          setStats({
+            totalTasks: allTasksData.length,
+            pendingTasks: pendingTasksData.length,
+            doneTasks: doneTasks.length,
+            pendingSubmissions: pendingSubmissions.length,
+          });
+
+          setRecentTasks(allTasksData.slice(0, 6));
+        } else {
+          const visibleTasks = await taskAPI.getVisibleTasks();
+          const visibleTasksData = visibleTasks.data.content || visibleTasks.data || [];
+          
+          const pendingTasks = visibleTasksData.filter(task => task.status === 'PENDING');
+          const assignedTasks = visibleTasksData.filter(task => task.status === 'ASSIGNED');
+          const doneTasks = visibleTasksData.filter(task => task.status === 'DONE');
+
+          setStats({
+            totalTasks: visibleTasksData.length,
+            pendingTasks: pendingTasks.length,
+            assignedTasks: assignedTasks.length,
+            doneTasks: doneTasks.length,
+          });
+
+          setRecentTasks(visibleTasksData.slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoaderPlanet size={60} />
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-8"
+    >
+      {/* Welcome Header */}
+      <div className="text-center space-y-2">
+        <motion.h1
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+          className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent"
+        >
+          Welcome back, {user?.fullName}
+        </motion.h1>
+        <p className="text-slate-400 text-lg">
+          {isAdmin() ? 'Mission Command Center' : 'Your Mission Dashboard'}
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <CardStat
+          title="Total Tasks"
+          value={stats.totalTasks}
+          icon={CheckSquare}
+          color="cyan"
+          delay={0}
+        />
+        <CardStat
+          title="Pending Tasks"
+          value={stats.pendingTasks}
+          icon={Clock}
+          color="orange"
+          delay={0.1}
+        />
+        {isAdmin() ? (
+          <>
+            <CardStat
+              title="Completed Tasks"
+              value={stats.doneTasks}
+              icon={CheckCircle}
+              color="green"
+              delay={0.2}
+            />
+            <CardStat
+              title="Pending Submissions"
+              value={stats.pendingSubmissions}
+              icon={Upload}
+              color="purple"
+              delay={0.3}
+            />
+          </>
+        ) : (
+          <>
+            <CardStat
+              title="Assigned Tasks"
+              value={stats.assignedTasks}
+              icon={TrendingUp}
+              color="purple"
+              delay={0.2}
+            />
+            <CardStat
+              title="Completed Tasks"
+              value={stats.doneTasks}
+              icon={CheckCircle}
+              color="green"
+              delay={0.3}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Dashboard Content */}
+      {isAdmin() ? (
+        <AdminDashboard recentTasks={recentTasks} onRefresh={refreshDashboard} />
+      ) : (
+        <UserDashboard recentTasks={recentTasks} onRefresh={refreshDashboard} />
+      )}
+    </motion.div>
+  );
+};
+
+const AdminDashboard = ({ recentTasks, onRefresh }) => {
+  return (
+    <Tab.Group>
+      <Tab.List className="flex space-x-1 rounded-xl bg-slate-900/50 p-1">
+        {['Recent Tasks', 'User Management', 'Analytics'].map((tab) => (
+          <Tab
+            key={tab}
+            className={({ selected }) =>
+              `w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-white transition-all ${
+                selected
+                  ? 'bg-neon-cyan/20 text-neon-cyan shadow'
+                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+              }`
+            }
+          >
+            {tab}
+          </Tab>
+        ))}
+      </Tab.List>
+      <Tab.Panels className="mt-6">
+        <Tab.Panel>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">Recent Tasks</h3>
+            <TaskTable
+              tasks={recentTasks}
+              onRefresh={onRefresh}
+            />
+          </motion.div>
+        </Tab.Panel>
+        <Tab.Panel>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+          >
+            <UserManagement />
+          </motion.div>
+        </Tab.Panel>
+        <Tab.Panel>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+          >
+            <h3 className="text-xl font-semibold text-white mb-4">Analytics</h3>
+            <p className="text-slate-400">Advanced analytics coming soon...</p>
+          </motion.div>
+        </Tab.Panel>
+      </Tab.Panels>
+    </Tab.Group>
+  );
+};
+
+const UserDashboard = ({ recentTasks, onRefresh }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+    >
+      <h3 className="text-xl font-semibold text-white mb-4">Available Tasks</h3>
+      <TaskTable
+        tasks={recentTasks}
+        onRefresh={onRefresh}
+      />
+    </motion.div>
+  );
+};
+
+export default Dashboard;
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Edit, Trash2, Calendar, Tag, User, ExternalLink, Star } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { submissionAPI } from '../api';
+
+const TaskTable = ({ tasks, onEdit, onDelete, onView, onRefresh }) => {
+  const { isAdmin, user } = useAuth();
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState('ALL');
+  const [submittingTasks, setSubmittingTasks] = useState(new Set());
+
+  const statusColors = {
+    PENDING: 'bg-slate-500/20 text-slate-300',
+    ASSIGNED: 'bg-blue-500/20 text-blue-300',
+    DONE: 'bg-green-500/20 text-green-300',
+  };
+
+  const taskList = tasks?.content || tasks || [];
+
+  const filteredTasks = taskList.filter(task =>
+    filter === 'ALL' || task.status === filter
+  );
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No deadline';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const handleViewTask = (task) => {
+    navigate(`/tasks/${task.id}`);
+  };
+
+  const isTaskAssignedToUser = (task) => {
+    if (!task.assignedUserIds || task.assignedUserIds.length === 0) {
+      return true; // Task is available to all users
+    }
+    return task.assignedUserIds.includes(user?.id);
+  };
+
+  const isTaskSpecificallyAssigned = (task) => {
+    return task.assignedUserIds && task.assignedUserIds.length > 0 && task.assignedUserIds.includes(user?.id);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Filter Chips */}
+      <div className="flex space-x-2 overflow-x-auto pb-2">
+        {['ALL', 'PENDING', 'ASSIGNED', 'DONE'].map((status) => (
+          <motion.button
+            key={status}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setFilter(status)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${filter === status
+                ? 'bg-neon-cyan/20 text-neon-cyan ring-2 ring-neon-cyan/30 ring-offset-1 ring-offset-slate-900'
+                : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+              }`}
+          >
+            {status}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Tasks Grid/List */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredTasks.map((task, index) => (
+          <motion.div
+            key={task.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 hover:border-neon-cyan/30 transition-colors relative"
+          >
+            {/* Star icon for specifically assigned tasks */}
+            {!isAdmin() && isTaskSpecificallyAssigned(task) && (
+              <div className="absolute top-4 right-4">
+                <Star className="h-5 w-5 text-yellow-400 fill-current" />
+              </div>
+            )}
+
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="font-semibold text-white text-lg truncate pr-8">{task.title}</h3>
+              <span className={`px-2 py-1 rounded-lg text-xs font-medium ${statusColors[task.status]}`}>
+                {task.status}
+              </span>
+            </div>
+
+            <p className="text-slate-400 text-sm mb-4 line-clamp-2">{task.description}</p>
+
+            {/* Task Info */}
+            <div className="space-y-2 mb-4">
+              {task.deadline && (
+                <div className="flex items-center space-x-2 text-sm text-slate-400">
+                  <Calendar className="h-4 w-4" />
+                  <span>{formatDate(task.deadline)}</span>
+                </div>
+              )}
+
+              {task.tags && task.tags.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <Tag className="h-4 w-4 text-slate-400" />
+                  <div className="flex flex-wrap gap-1">
+                    {task.tags.slice(0, 2).map((tag, tagIndex) => (
+                      <span key={tagIndex} className="px-2 py-1 bg-neon-purple/20 text-neon-purple text-xs rounded">
+                        {tag}
+                      </span>
+                    ))}
+                    {task.tags.length > 2 && (
+                      <span className="text-xs text-slate-400">+{task.tags.length - 2} more</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {task.assignedUserIds && task.assignedUserIds.length > 0 && (
+                <div className="flex items-center space-x-2 text-sm text-slate-400">
+                  <User className="h-4 w-4" />
+                  <span>Assigned to {task.assignedUserIds.length} user(s)</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-between items-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleViewTask(task)}
+                className="flex items-center space-x-2 px-3 py-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-colors"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="text-sm">View</span>
+              </motion.button>
+
+              <div className="flex space-x-2">
+                {isAdmin() && (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => onEdit && onEdit(task)}
+                      className="p-2 bg-neon-cyan/20 text-neon-cyan rounded-lg hover:bg-neon-cyan/30 transition-colors"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => onDelete && onDelete(task)}
+                      className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </motion.button>
+                  </>
+                )}
+                {/* Submit button removed from here */}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {filteredTasks.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
+          <div className="text-slate-400 text-lg">No tasks found</div>
+          <div className="text-slate-500 text-sm mt-2">Try adjusting your filters</div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+export default TaskTable;
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8085';
+
+// Create axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add JWT token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('jwt');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('user');
+      window.location.href = '/signin';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const authAPI = {
+  signup: (userData) => api.post('/auth/signup', userData),
+  signin: (credentials) => api.post('/auth/signin', credentials),
+};
+
+// User API
+export const userAPI = {
+  getProfile: () => api.get('/api/user/profile'),
+  getAllUsers: () => api.get('/api/user/all'),
+  updateProfile: (profileData) => api.put('/api/user/profile', profileData),
+  deleteUser: (userId) => api.delete(`/api/user/delete/${userId}`),
+};
+
+// Task API
+export const taskAPI = {
+  createTask: (taskData) => api.post('/api/tasks/create-user', taskData),
+  getTask: (id) => api.get(`/api/tasks/get-task/${id}`),
+  getAssignedTasks: (userId, status, page = 0, size = 20) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page);
+    params.append('size', size);
+    return api.get(`/api/tasks/assigned-users-task/${userId}?${params}`);
+  },
+  getAllTasks: (status, page = 0, size = 20) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page);
+    params.append('size', size);
+    return api.get(`/api/tasks/get-all-users?${params}`);
+  },
+  getVisibleTasks: (status, page = 0, size = 20) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page);
+    params.append('size', size);
+    return api.get(`/api/tasks/visible-tasks?${params}`);
+  },
+  updateTask: (id, taskData) => api.put(`/api/tasks/update/${id}`, taskData),
+  assignTask: (userId, taskId) => api.put(`/api/tasks/${userId}/user/${taskId}/assigned`),
+  completeTask: (id) => api.put(`/api/tasks/complete/${id}`),
+  deleteTask: (id) => api.delete(`/api/tasks/delete/${id}`),
+  getTaskHistory: (taskId) => api.get(`/api/tasks/history/${taskId}`),
+  getMyTasks: (status) => axios.get(`/api/tasks/my-tasks?status=${status}`),
+};
+
+// Submission API
+export const submissionAPI = {
+  submitTask: (taskId, gitHubLink) => api.post(`/api/submission/submit-task?taskId=${taskId}&gitHubLink=${encodeURIComponent(gitHubLink)}`),
+  getAllSubmissions: (page = 0, size = 20) => {
+    return api.get(`/api/submission/get-all-submissions?page=${page}&size=${size}`);
+  },
+  getTaskSubmissions: (taskId, page = 0, size = 20) => {
+    return api.get(`/api/submission/get-task-submissions-by-task-id/${taskId}?page=${page}&size=${size}`);
+  },
+  updateSubmissionStatus: (submissionId, status) => api.put(`/api/submission/accept-decline-submission/${submissionId}?status=${status}`),
+  addComment: (submissionId, comment) => api.post(`/api/submission/comment/${submissionId}?comment=${encodeURIComponent(comment)}`),
+  getComments: (submissionId) => api.get(`/api/submission/comments/${submissionId}`),
+};
+
+export default api;
+import React from 'react';
+import { motion } from 'framer-motion';
+
+const CardStat = ({ title, value, icon: Icon, color = 'cyan', trend, delay = 0 }) => {
+  const colorClasses = {
+    cyan: 'from-cyan-500/20 to-blue-500/20 border-cyan-500/30 text-cyan-400',
+    purple: 'from-purple-500/20 to-pink-500/20 border-purple-500/30 text-purple-400',
+    green: 'from-green-500/20 to-emerald-500/20 border-green-500/30 text-green-400',
+    orange: 'from-orange-500/20 to-red-500/20 border-orange-500/30 text-orange-400',
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.5 }}
+      whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(125, 211, 252, 0.3)' }}
+      className={`bg-gradient-to-br ${colorClasses[color]} backdrop-blur-md rounded-xl border p-6 shadow-lg`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-slate-400 text-sm font-medium">{title}</p>
+          <motion.p
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: delay + 0.2, type: 'spring' }}
+            className="text-3xl font-bold text-white mt-2"
+          >
+            {value}
+          </motion.p>
+          {trend && (
+            <p className={`text-sm mt-1 ${trend.positive ? 'text-green-400' : 'text-red-400'}`}>
+              {trend.value}
+            </p>
+          )}
+        </div>
+        <div className={`p-3 rounded-lg bg-gradient-to-br ${colorClasses[color]}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default CardStat;
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Dialog } from '@headlessui/react';
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Calendar,
+  Tag,
+  User,
+  ExternalLink,
+  X,
+  MessageCircle,
+  History,
+  Star
+} from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { taskAPI, submissionAPI, userAPI } from '../api';
+import LoaderPlanet from '../components/LoaderPlanet';
+import CommentSection from '../components/CommentSection';
+import TaskHistory from '../components/TaskHistory';
+
+const TaskDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
+  const [task, setTask] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [gitHubLink, setGitHubLink] = useState('');
+
+  useEffect(() => {
+    fetchTaskDetails();
+    if (isAdmin()) {
+      fetchUsers();
+    }
+  }, [id, isAdmin]);
+
+  const fetchTaskDetails = async () => {
+    try {
+      const [taskResponse, submissionsResponse] = await Promise.all([
+        taskAPI.getTask(id),
+        submissionAPI.getTaskSubmissions(id)
+      ]);
+
+      setTask(taskResponse.data);
+      setSubmissions(submissionsResponse.data.content || submissionsResponse.data || []);
+    } catch (error) {
+      console.error('Error fetching task details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await userAPI.getAllUsers();
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const handleSubmitTask = async () => {
+    try {
+      await submissionAPI.submitTask(id, gitHubLink);
+      setShowSubmitModal(false);
+      setGitHubLink('');
+      fetchTaskDetails();
+    } catch (error) {
+      console.error('Error submitting task:', error);
+      alert('Error submitting task: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleEditTask = async (taskData) => {
+    try {
+      await taskAPI.updateTask(id, taskData);
+      setShowEditModal(false);
+      fetchTaskDetails();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      alert('Error updating task: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (window.confirm('Are you sure you want to delete this task? This will also delete all task history.')) {
+      try {
+        await taskAPI.deleteTask(id);
+        navigate('/tasks');
+      } catch (error) {
+        console.error('Error deleting task:', error);
+        alert('Error deleting task: ' + (error.response?.data?.message || error.message));
+      }
+    }
+  };
+
+  const handleUpdateSubmissionStatus = async (submissionId, status) => {
+    try {
+      await submissionAPI.updateSubmissionStatus(submissionId, status);
+      fetchTaskDetails(); // Refresh task and submissions to reflect status change
+    } catch (error) {
+      console.error('Error updating submission status:', error);
+    }
+  };
+
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.fullName : 'Unknown User';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No deadline';
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return 'bg-slate-500/20 text-slate-300';
+      case 'ASSIGNED':
+        return 'bg-blue-500/20 text-blue-300';
+      case 'DONE':
+        return 'bg-green-500/20 text-green-300';
+      default:
+        return 'bg-slate-500/20 text-slate-300';
+    }
+  };
+
+  const getSubmissionStatusColor = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return 'bg-slate-500/20 text-slate-300';
+      case 'ACCEPTED':
+        return 'bg-green-500/20 text-green-300';
+      case 'REJECTED':
+        return 'bg-red-500/20 text-red-300';
+      default:
+        return 'bg-slate-500/20 text-slate-300';
+    }
+  };
+
+  const isTaskAssignedToUser = () => {
+    if (!task?.assignedUserIds || task.assignedUserIds.length === 0) {
+      return true; // Task is available to all users
+    }
+    return task.assignedUserIds.includes(user?.id);
+  };
+
+  const isTaskSpecificallyAssigned = () => {
+    return task?.assignedUserIds && task.assignedUserIds.length > 0 && task.assignedUserIds.includes(user?.id);
+  };
+
+  const userSubmissions = submissions.filter(sub => sub.userId === user?.id);
+  const hasAcceptedSubmission = userSubmissions.some(sub => sub.status === 'ACCEPTED');
+  const canSubmit = !isAdmin() &&
+    task?.status === 'ASSIGNED' &&
+    isTaskAssignedToUser() &&
+    !hasAcceptedSubmission;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoaderPlanet size={60} />
+      </div>
+    );
+  }
+
+  if (!task) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-slate-400 text-lg">Task not found</div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/tasks')}
+            className="p-2 bg-slate-800/50 rounded-lg text-slate-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </motion.button>
+          <div className="flex items-center space-x-3">
+            <div>
+              <h1 className="text-3xl font-bold text-white">{task.title}</h1>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className={`inline - flex px - 3 py - 1 rounded - lg text - sm font - medium ${getStatusColor(task.status)} `}>
+                  {task.status}
+                </span>
+                {!isAdmin() && isTaskSpecificallyAssigned() && (
+                  <div className="flex items-center space-x-1 text-yellow-400">
+                    <Star className="h-4 w-4 fill-current" />
+                    <span className="text-xs">Specifically assigned to you</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex space-x-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowHistoryModal(true)}
+            className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+          >
+            <History className="h-5 w-5" />
+          </motion.button>
+
+          {isAdmin() && (
+            <>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowEditModal(true)}
+                className="p-2 bg-neon-cyan/20 text-neon-cyan rounded-lg hover:bg-neon-cyan/30 transition-colors"
+              >
+                <Edit className="h-5 w-5" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleDeleteTask}
+                className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+              >
+                <Trash2 className="h-5 w-5" />
+              </motion.button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Task Details */}
+        <div className="lg:col-span-2 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+          >
+            <h2 className="text-xl font-semibold text-white mb-4">Description</h2>
+            <p className="text-slate-300 leading-relaxed">
+              {task.description || 'No description provided'}
+            </p>
+          </motion.div>
+
+          {/* Your Submissions Section for Non-Admins */}
+          {!isAdmin() && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+            >
+              <h2 className="text-xl font-semibold text-white mb-4">Your Submissions</h2>
+              {userSubmissions.length > 0 ? (
+                <div className="space-y-4">
+                  {userSubmissions.map((submission) => (
+                    <div
+                      key={submission.id}
+                      className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30"
+                    >
+                      <p className="text-slate-300">Status: <span className={getSubmissionStatusColor(submission.status)}>{submission.status}</span></p>
+                      <p className="text-slate-300">Submitted on: {new Date(submission.submissionTime).toLocaleDateString()}</p>
+                      <a
+                        href={submission.gitHubLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-neon-cyan hover:text-neon-purple transition-colors text-sm flex items-center space-x-1"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        <span>View Your Submission</span>
+                      </a>
+                      {submission.status === 'REJECTED' && (
+                        <p className="text-red-400 mt-2">Your submission was rejected. You can submit again.</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-400">You haven't submitted any solutions yet.</p>
+              )}
+              {canSubmit && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowSubmitModal(true)}
+                  className="mt-4 flex items-center space-x-2 bg-gradient-to-r from-neon-cyan to-neon-purple px-4 py-2 rounded-lg text-white font-medium shadow-lg hover:shadow-neon transition-all"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span>Submit Solution</span>
+                </motion.button>
+              )}
+            </motion.div>
+          )}
+
+          {/* All Submissions Section for Admins */}
+          {isAdmin() && submissions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+            >
+              <h2 className="text-xl font-semibold text-white mb-4">Submissions</h2>
+              <div className="space-y-4">
+                {submissions.map((submission) => (
+                  <div
+                    key={submission.id}
+                    className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/30"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="text-white font-medium">{getUserName(submission.userId)}</p>
+                        <p className="text-sm text-slate-400">
+                          {new Date(submission.submissionTime).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px - 2 py - 1 rounded text - xs ${getSubmissionStatusColor(submission.status)} `}>
+                          {submission.status}
+                        </span>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setSelectedSubmission(submission);
+                            setShowCommentsModal(true);
+                          }}
+                          className="p-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </motion.button>
+                      </div>
+                    </div>
+                    <a
+                      href={submission.gitHubLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neon-cyan hover:text-neon-purple transition-colors text-sm flex items-center space-x-1"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span>View GitHub Repository</span>
+                    </a>
+                    {isAdmin() && submission.status === 'PENDING' && (
+                      <div className="flex space-x-2 mt-3">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleUpdateSubmissionStatus(submission.id, 'ACCEPTED')}
+                          className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors text-sm"
+                        >
+                          Accept
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleUpdateSubmissionStatus(submission.id, 'REJECTED')}
+                          className="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors text-sm"
+                        >
+                          Reject
+                        </motion.button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Task Info Sidebar */}
+        <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+          >
+            <h2 className="text-xl font-semibold text-white mb-4">Task Information</h2>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="text-sm text-slate-400">Deadline</p>
+                  <p className="text-white">{formatDate(task.deadline)}</p>
+                </div>
+              </div>
+
+              {task.assignedUserIds && task.assignedUserIds.length > 0 && (
+                <div className="flex items-start space-x-3">
+                  <User className="h-5 w-5 text-slate-400 mt-1" />
+                  <div>
+                    <p className="text-sm text-slate-400">Assigned to</p>
+                    <div className="space-y-1">
+                      {task.assignedUserIds.map(userId => (
+                        <p key={userId} className="text-white text-sm">
+                          {getUserName(userId)}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(!task.assignedUserIds || task.assignedUserIds.length === 0) && (
+                <div className="flex items-center space-x-3">
+                  <User className="h-5 w-5 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-400">Assignment</p>
+                    <p className="text-white">Available to all users</p>
+                  </div>
+                </div>
+              )}
+
+              {task.tags && task.tags.length > 0 && (
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Tag className="h-5 w-5 text-slate-400" />
+                    <p className="text-sm text-slate-400">Tags</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {task.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-neon-purple/20 text-neon-purple text-xs rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Edit Task Modal */}
+      <EditTaskModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleEditTask}
+        users={users}
+        initialData={task}
+      />
+
+      {/* Submit Task Modal */}
+      <Dialog open={showSubmitModal} onClose={() => setShowSubmitModal(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <Dialog.Title className="text-xl font-semibold text-white">
+                Submit Solution
+              </Dialog.Title>
+              <button
+                onClick={() => setShowSubmitModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  GitHub Repository Link
+                </label>
+                <input
+                  type="url"
+                  value={gitHubLink}
+                  onChange={(e) => setGitHubLink(e.target.value)}
+                  placeholder="https://github.com/username/repository"
+                  className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={() => setShowSubmitModal(false)}
+                  className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitTask}
+                  disabled={!gitHubLink.trim()}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-neon-cyan to-neon-purple text-white rounded-lg hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* Comments Modal */}
+      <Dialog open={showCommentsModal} onClose={() => setShowCommentsModal(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <Dialog.Title className="text-xl font-semibold text-white">
+                Submission Comments
+              </Dialog.Title>
+              <button
+                onClick={() => setShowCommentsModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {selectedSubmission && (
+              <CommentSection submissionId={selectedSubmission.id} />
+            )}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* Task History Modal */}
+      <Dialog open={showHistoryModal} onClose={() => setShowHistoryModal(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <Dialog.Title className="text-xl font-semibold text-white">
+                Task History
+              </Dialog.Title>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <TaskHistory taskId={id} />
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </motion.div>
+  );
+};
+
+const EditTaskModal = ({ isOpen, onClose, onSubmit, users, initialData }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    deadline: '',
+    tags: '',
+    assignedUserIds: [],
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        deadline: initialData.deadline ? new Date(initialData.deadline).toISOString().slice(0, 16) : '',
+        tags: initialData.tags ? initialData.tags.join(', ') : '',
+        assignedUserIds: initialData.assignedUserIds || [],
+      });
+    }
+  }, [initialData, isOpen]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const taskData = {
+      ...formData,
+      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
+    };
+    onSubmit(taskData);
+  };
+
+  const handleUserSelection = (userId) => {
+    setFormData(prev => ({
+      ...prev,
+      assignedUserIds: prev.assignedUserIds.includes(userId)
+        ? prev.assignedUserIds.filter(id => id !== userId)
+        : [...prev.assignedUserIds, userId]
+    }));
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <Dialog.Title className="text-xl font-semibold text-white">
+              Edit Task
+            </Dialog.Title>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-white"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Deadline
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.deadline}
+                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Tags (comma-separated)
+              </label>
+              <input
+                type="text"
+                value={formData.tags}
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                placeholder="frontend, react, urgent"
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Assign to Users (Multiple Selection)
+              </label>
+              <p className="text-xs text-slate-400 mb-3">
+                Leave empty to make task available to all users. Select specific users to assign directly.
+              </p>
+              <div className="max-h-40 overflow-y-auto border border-slate-700 rounded-lg p-3 bg-slate-800/30">
+                {users.map((user) => (
+                  <label key={user.id} className="flex items-center space-x-2 py-1 cursor-pointer hover:bg-slate-700/30 rounded px-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.assignedUserIds.includes(user.id)}
+                      onChange={() => handleUserSelection(user.id)}
+                      className="rounded border-slate-600 text-neon-cyan focus:ring-neon-cyan focus:ring-offset-slate-900"
+                    />
+                    <span className="text-white text-sm">
+                      {user.fullName} ({user.email})
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {formData.assignedUserIds.length > 0 && (
+                <p className="text-xs text-neon-cyan mt-2">
+                  {formData.assignedUserIds.length} user(s) selected
+                </p>
+              )}
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-neon-cyan to-neon-purple text-white rounded-lg hover:shadow-neon transition-all"
+              >
+                Update Task
+              </button>
+            </div>
+          </div>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
+  );
+};
+
+export default TaskDetail;
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Dialog } from '@headlessui/react';
+import { Plus, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { taskAPI, userAPI } from '../api';
+import TaskTable from '../components/TaskTable';
+import LoaderPlanet from '../components/LoaderPlanet';
+import { useToast } from '../hooks/useToast';
+
+const Tasks = () => {
+  const { user, isAdmin } = useAuth();
+  const { success, error } = useToast();
+  const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  useEffect(() => {
+    fetchTasks();
+    if (isAdmin()) {
+      fetchUsers();
+    }
+  }, [user, isAdmin]);
+
+  const fetchTasks = async () => {
+    try {
+      let response;
+      if (isAdmin()) {
+        response = await taskAPI.getAllTasks();
+      } else {
+        response = await taskAPI.getVisibleTasks();
+      }
+      // Handle paginated response
+      setTasks(response.data.content || response.data || []);
+    } catch (err) {
+      error('Error fetching tasks');
+      console.error('Error fetching tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await userAPI.getAllUsers();
+      setUsers(response.data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    }
+  };
+
+  const handleCreateTask = async (taskData) => {
+    try {
+      await taskAPI.createTask(taskData);
+      success('Task created successfully');
+      fetchTasks();
+      setShowCreateModal(false);
+    } catch (err) {
+      error('Error creating task');
+      console.error('Error creating task:', err);
+    }
+  };
+
+  const handleUpdateTask = async (taskData) => {
+    try {
+      await taskAPI.updateTask(selectedTask.id, taskData);
+      success('Task updated successfully');
+      fetchTasks();
+      setShowEditModal(false);
+      setSelectedTask(null);
+    } catch (err) {
+      error('Error updating task');
+      console.error('Error updating task:', err);
+    }
+  };
+
+  const handleDeleteTask = async (task) => {
+    if (window.confirm('Are you sure you want to delete this task? This will also delete all task history.')) {
+      try {
+        await taskAPI.deleteTask(task.id);
+        success('Task and its history deleted successfully');
+        fetchTasks();
+      } catch (err) {
+        error('Error deleting task');
+        console.error('Error deleting task:', err);
+      }
+    }
+  };
+
+  const handleEditTask = (task) => {
+    setSelectedTask(task);
+    setShowEditModal(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoaderPlanet size={60} />
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-white">
+            {isAdmin() ? 'All Tasks' : 'Available Tasks'}
+          </h1>
+          <p className="text-slate-400 mt-1">
+            {isAdmin() ? 'Manage and assign tasks' : 'View available tasks and submit solutions'}
+          </p>
+        </div>
+
+        {isAdmin() && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-2 bg-gradient-to-r from-neon-cyan to-neon-purple px-4 py-2 rounded-lg text-white font-medium shadow-lg hover:shadow-neon transition-all"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Create Task</span>
+          </motion.button>
+        )}
+      </div>
+
+      {/* Tasks Table */}
+      <TaskTable
+        tasks={tasks}
+        onEdit={handleEditTask}
+        onDelete={handleDeleteTask}
+        onRefresh={fetchTasks}
+      />
+
+      {/* Create Task Modal */}
+      <TaskModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateTask}
+        users={users}
+        title="Create New Task"
+      />
+
+      {/* Edit Task Modal */}
+      <TaskModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedTask(null);
+        }}
+        onSubmit={handleUpdateTask}
+        users={users}
+        title="Edit Task"
+        initialData={selectedTask}
+      />
+    </motion.div>
+  );
+};
+
+const TaskModal = ({ isOpen, onClose, onSubmit, users, title, initialData = null }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    deadline: '',
+    tags: '',
+    assignedUserIds: [],
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        deadline: initialData.deadline ? new Date(initialData.deadline).toISOString().slice(0, 16) : '',
+        tags: initialData.tags ? initialData.tags.join(', ') : '',
+        assignedUserIds: initialData.assignedUserIds || [],
+      });
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        deadline: '',
+        tags: '',
+        assignedUserIds: [],
+      });
+    }
+  }, [initialData, isOpen]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const taskData = {
+      ...formData,
+      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
+    };
+    onSubmit(taskData);
+  };
+
+  const handleUserSelection = (userId) => {
+    setFormData(prev => ({
+      ...prev,
+      assignedUserIds: prev.assignedUserIds.includes(userId)
+        ? prev.assignedUserIds.filter(id => id !== userId)
+        : [...prev.assignedUserIds, userId]
+    }));
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-slate-900/90 backdrop-blur-md rounded-xl border border-slate-700/50 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <Dialog.Title className="text-xl font-semibold text-white">
+              {title}
+            </Dialog.Title>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-white"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Deadline
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.deadline}
+                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Tags (comma-separated)
+              </label>
+              <input
+                type="text"
+                value={formData.tags}
+                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                placeholder="frontend, react, urgent"
+                className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg focus:ring-2 focus:ring-neon-cyan focus:border-transparent text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Assign to Users (Multiple Selection)
+              </label>
+              <p className="text-xs text-slate-400 mb-3">
+                Leave empty to make task available to all users. Select specific users to assign directly.
+              </p>
+              <div className="max-h-40 overflow-y-auto border border-slate-700 rounded-lg p-3 bg-slate-800/30">
+                {users.map((user) => (
+                  <label key={user.id} className="flex items-center space-x-2 py-1 cursor-pointer hover:bg-slate-700/30 rounded px-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.assignedUserIds.includes(user.id)}
+                      onChange={() => handleUserSelection(user.id)}
+                      className="rounded border-slate-600 text-neon-cyan focus:ring-neon-cyan focus:ring-offset-slate-900"
+                    />
+                    <span className="text-white text-sm">
+                      {user.fullName} ({user.email})
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {formData.assignedUserIds.length > 0 && (
+                <p className="text-xs text-neon-cyan mt-2">
+                  {formData.assignedUserIds.length} user(s) selected
+                </p>
+              )}
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-neon-cyan to-neon-purple text-white rounded-lg hover:shadow-neon transition-all"
+              >
+                {initialData ? 'Update Task' : 'Create Task'}
+              </button>
+            </div>
+          </form>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
+  );
+};
+
+export default Tasks;
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { submissionAPI } from '../api';
+import SubmissionTable from '../components/SubmissionTable';
+import LoaderPlanet from '../components/LoaderPlanet';
+
+const Submissions = () => {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
+
+  const fetchSubmissions = async () => {
+    try {
+      const response = await submissionAPI.getAllSubmissions();
+      // Handle paginated response
+      setSubmissions(response.data.content || response.data || []);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (submissionId, status) => {
+    try {
+      await submissionAPI.updateSubmissionStatus(submissionId, status);
+      fetchSubmissions(); // Refresh the list
+    } catch (error) {
+      console.error('Error updating submission status:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoaderPlanet size={60} />
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-white">Task Submissions</h1>
+        <p className="text-slate-400 mt-1">Review and manage task submissions</p>
+      </div>
+
+      {/* Submissions Table */}
+      <div className="bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
+        <SubmissionTable
+          submissions={submissions}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
+export default Submissions;
+package com.anvith.submission_service.controller;
+
+import com.anvith.submission_service.entity.Submission;
+import com.anvith.submission_service.entity.SubmissionComment;
+import com.anvith.submission_service.entity.SubmissionStatus;
+import com.anvith.submission_service.entity.User;
+import com.anvith.submission_service.fiegnClient.TaskServiceClient;
+import com.anvith.submission_service.fiegnClient.UserServiceClient;
+import com.anvith.submission_service.serivces.SubmissionService;
+import feign.FeignException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/submission")
+public class SubmissionController {
+
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+    @Autowired
+    private TaskServiceClient taskServiceClient;
+
+    @Autowired
+    private SubmissionService submissionService;
+
+    @PostMapping("/submit-task")
+    public ResponseEntity<?> submitTask(
+            @RequestParam String taskId,
+            @RequestParam String gitHubLink,
+            @RequestHeader("Authorization") String jwt
+    ) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Submission submission = submissionService.submitTask(taskId, gitHubLink, user.getId(), jwt);
+            return new ResponseEntity<>(submission, HttpStatus.CREATED);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User or Task service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error submitting task: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/get-all-submissions")
+    public ResponseEntity<Page<Submission>> getAllSubmissions(
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Page<Submission> submissions = submissionService.getAllTaskSubmission(jwt, pageable);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
+    }
+
+    @GetMapping("/get-task-submissions-by-task-id/{taskId}")
+    public ResponseEntity<Page<Submission>> getTaskSubmissionsByTaskId(
+            @PathVariable String taskId,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Page<Submission> submissions = submissionService.getTaskSubmissionsByTaskId(taskId, jwt, pageable);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
+    }
+
+    @PutMapping("/accept-decline-submission/{submissionId}")
+    public ResponseEntity<Submission> acceptDeclineSubmission(
+            @PathVariable String submissionId,
+            @RequestParam("status") String status,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        // Validate status
+        try {
+            SubmissionStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Invalid status: " + status + ". Must be PENDING, ACCEPTED, or REJECTED");
+        }
+
+        User user = userServiceClient.getUserProfile(jwt);
+        Submission submission = submissionService.acceptDeclineSubmission(submissionId, status, jwt);
+        return new ResponseEntity<>(submission, HttpStatus.OK);
+    }
+
+    @PostMapping("/comment/{submissionId}")
+    public ResponseEntity<SubmissionComment> addComment(
+            @PathVariable String submissionId,
+            @RequestParam String comment,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        SubmissionComment submissionComment = submissionService.addComment(submissionId, comment, user.getId());
+        return new ResponseEntity<>(submissionComment, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/comments/{submissionId}")
+    public ResponseEntity<List<SubmissionComment>> getCommentsBySubmissionId(
+            @PathVariable String submissionId,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        List<SubmissionComment> comments = submissionService.getCommentsBySubmissionId(submissionId, jwt);
+        return new ResponseEntity<>(comments, HttpStatus.OK);
+    }
+}
+package com.anvith.submission_service.fiegnClient;
+
+import com.anvith.submission_service.entity.Task;
+import com.anvith.submission_service.entity.TaskStatus;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@FeignClient(name = "TASK-SERVICE")
+public interface TaskServiceClient {
+
+    @PostMapping("/api/tasks/create-user")
+    Task createTask(@RequestBody Task task, @RequestHeader("Authorization") String jwt);
+
+    @GetMapping("/api/tasks/get-task/{id}")
+    Task getTaskById(@PathVariable("id") String id, @RequestHeader("Authorization") String jwt);
+
+    @GetMapping("/api/tasks/assigned-users-task/{userId}")
+    List<Task> getAssignedTasksByUserId(@PathVariable("userId") String userId,
+                                        @RequestParam(required = false) TaskStatus status,
+                                        @RequestHeader("Authorization") String jwt);
+
+    @PutMapping("/api/tasks/{userId}/user/{taskId}/assigned")
+    Task assignTaskToUser(@PathVariable("userId") String userId,
+                          @PathVariable("taskId") String taskId,
+                          @RequestHeader("Authorization") String jwt);
+
+    @GetMapping("/api/tasks/get-all-users")
+    List<Task> getAllTasks(@RequestParam(required = false) TaskStatus status,
+                           @RequestHeader("Authorization") String jwt);
+
+    @PutMapping("/api/tasks/update/{id}")
+    Task updateTask(@PathVariable("id") String id,
+                    @RequestBody Task updatedTask,
+                    @RequestHeader("Authorization") String jwt);
+
+    @DeleteMapping("/api/tasks/delete/{id}")
+    void deleteTask(@PathVariable("id") String id, @RequestHeader("Authorization") String jwt);
+
+    @PutMapping("/api/tasks/complete/{id}")
+    Task completeTask(@PathVariable("id") String id, @RequestHeader("Authorization") String jwt);
+}
+package com.anvith.submission_service.fiegnClient;
+
+import com.anvith.submission_service.entity.User;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+
+import java.util.List;
+
+@FeignClient(name = "USER-SERVICE", path = "/api/user")
+public interface UserServiceClient {
+
+    @GetMapping("/profile")
+    User getUserProfile(@RequestHeader("Authorization") String authHeader);
+
+    @GetMapping("/all")
+    List<User> getAllUsers();
+}
+package com.anvith.submission_service.serivces;
+
+import com.anvith.submission_service.entity.*;
+import com.anvith.submission_service.fiegnClient.TaskServiceClient;
+import com.anvith.submission_service.fiegnClient.UserServiceClient;
+import com.anvith.submission_service.repository.SubmissionCommentRepository;
+import com.anvith.submission_service.repository.SubmissionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class SubmissionService {
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private TaskServiceClient taskServiceClient;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+    @Autowired
+    private SubmissionCommentRepository commentRepository;
+
+    public Submission submitTask(String taskId, String gitHubLink, String userId, String jwt) throws Exception {
+        Task task = taskServiceClient.getTaskById(taskId, jwt);
+        if (task == null) {
+            throw new Exception("Task Not Found with ID: " + taskId);
+        }
+        if (task.getStatus() != TaskStatus.ASSIGNED) {
+            throw new Exception("Task is not in ASSIGNED state. Current status: " + task.getStatus());
+        }
+
+        boolean isAssignedToUser = false;
+        List<String> assignedIds = task.getAssignedUserIds();
+        if (assignedIds == null || assignedIds.isEmpty()) {
+            isAssignedToUser = true; // Task is open to all users
+        } else if (assignedIds.contains(userId)) {
+            isAssignedToUser = true; // Task is explicitly assigned to the user
+        }
+
+        if (!isAssignedToUser) {
+            throw new Exception("Task is not assigned to this user.");
+        }
+
+        Submission submission = new Submission();
+        submission.setTaskId(taskId);
+        submission.setUserId(userId);
+        submission.setGitHubLink(gitHubLink);
+        submission.setSubmissionTime(LocalDateTime.now());
+        return submissionRepository.save(submission);
+    }
+
+    public Submission getTaskSubmissionById(String submissionId, String jwt) throws Exception {
+        return submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new Exception("Task Submission Not Found with ID: " + submissionId));
+    }
+
+    public Page<Submission> getAllTaskSubmission(String jwt, Pageable pageable) {
+        return submissionRepository.findAll(pageable);
+    }
+
+    public Page<Submission> getTaskSubmissionsByTaskId(String taskId, String jwt, Pageable pageable) {
+        return submissionRepository.findByTaskId(taskId, pageable);
+    }
+
+    public SubmissionComment addComment(String submissionId, String comment, String userId) throws Exception {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new Exception("Submission Not Found with ID: " + submissionId));
+
+        SubmissionComment submissionComment = new SubmissionComment();
+        submissionComment.setSubmissionId(submissionId);
+        submissionComment.setComment(comment);
+        submissionComment.setComment(userId);
+        submissionComment.setCreatedAt(LocalDateTime.now());
+
+        return commentRepository.save(submissionComment);
+    }
+
+    public Submission acceptDeclineSubmission(String submissionId, String statusStr, String jwt) throws Exception {
+        Submission submission = getTaskSubmissionById(submissionId, jwt);
+        SubmissionStatus status = SubmissionStatus.valueOf(statusStr.toUpperCase());
+        submission.setStatus(status);
+
+        if (status == SubmissionStatus.ACCEPTED) {
+            taskServiceClient.completeTask(submission.getTaskId(), jwt); // Completes task if accepted
+        }
+
+        return submissionRepository.save(submission);
+    }
+
+    public List<SubmissionComment> getCommentsBySubmissionId(String submissionId, String jwt) throws Exception {
+        getTaskSubmissionById(submissionId, jwt); // Validate submission exists
+        return commentRepository.findBySubmissionId(submissionId);
+    }
+    public Submission updateSubmissionStatus(String submissionId, String status, String jwt) throws Exception {
+        Submission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new Exception("Submission Not Found with ID: " + submissionId));
+
+        SubmissionStatus submissionStatus;
+        try {
+            submissionStatus = SubmissionStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Invalid status: " + status);
+        }
+
+        submission.setStatus(submissionStatus);
+        submission = submissionRepository.save(submission);
+
+        // If submission is ACCEPTED, update the task status to DONE
+        if (submissionStatus == SubmissionStatus.ACCEPTED) {
+            try {
+                taskServiceClient.completeTask(submission.getTaskId(), jwt);
+            } catch (Exception e) {
+                throw new Exception("Failed to update task status to DONE: " + e.getMessage());
+            }
+        }
+
+        return submission;
+    }
+
+    public Page<Submission> getAllSubmissions(Pageable pageable) {
+        return submissionRepository.findAll(pageable);
+    }
+
+    public List<Submission> getTaskSubmissions(String taskId) {
+        return submissionRepository.findByTaskId(taskId);
+    }
+
+    public List<SubmissionComment> getComments(String submissionId) {
+        return commentRepository.findBySubmissionId(submissionId);
+    }
+
+}
+package com.anvith.task_service.controller;
+
+import com.anvith.task_service.entity.Task;
+import com.anvith.task_service.entity.TaskHistory;
+import com.anvith.task_service.entity.TaskStatus;
+import com.anvith.task_service.entity.User;
+import com.anvith.task_service.feignClient.UserServiceClient;
+import com.anvith.task_service.service.TaskService;
+import feign.FeignException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/tasks")
+public class TaskController {
+
+    @Autowired
+    private TaskService taskService;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+    @GetMapping("/visible-tasks")
+    public ResponseEntity<Page<Task>> getVisibleTasks(
+            @RequestParam(required = false) TaskStatus status,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            Page<Task> tasks = taskService.getAllTask(status, pageable);
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
+        } else {
+            Page<Task> tasks = taskService.getVisibleTasksForUser(user.getId(), status, pageable);
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
+        }
+    }
+    @PostMapping("/create-user")
+    public ResponseEntity<?> createTask(@RequestBody Task task, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task createTask = taskService.createTask(task, user.getRole());
+            return new ResponseEntity<>(createTask, HttpStatus.CREATED);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error creating task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GetMapping("/get-task/{id}")
+    public ResponseEntity<?> getTaskById(@PathVariable String id, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task task = taskService.getTaskById(id);
+            return new ResponseEntity<>(task, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error retrieving task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/assigned-users-task/{userId}")
+    public ResponseEntity<Page<Task>> assignedUsersTask(
+            @PathVariable String userId,
+            @RequestParam(required = false) TaskStatus status,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        if (!user.getId().equals(userId)) {
+            throw new Exception("Unauthorized: User ID mismatch");
+        }
+        Page<Task> tasks = taskService.assignedUsersTask(userId, status, pageable);
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
+    }
+
+    @PutMapping("/{userId}/user/{taskId}/assigned")
+    public ResponseEntity<?> assignTaskToUser(@PathVariable String userId, @PathVariable String taskId,
+                                              @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            if (!user.getRole().equals("ROLE_ADMIN")) {
+                return new ResponseEntity<>("Only Admin can assign tasks", HttpStatus.FORBIDDEN);
+            }
+            Task existingTask = taskService.getTaskById(taskId);
+            List<String> assignedUserIds = existingTask.getAssignedUserIds();
+            if (!assignedUserIds.contains(userId)) {
+                assignedUserIds.add(userId);
+                existingTask.setAssignedUserIds(assignedUserIds);
+                existingTask.setStatus(TaskStatus.ASSIGNED); // Ensure status is set to ASSIGNED
+                Task updatedTask = taskService.updateTask(taskId, existingTask, user.getId());
+                return new ResponseEntity<>(updatedTask, HttpStatus.OK);
+            }
+            return new ResponseEntity<>("User is already assigned to the task", HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error assigning task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/get-all-users")
+    public ResponseEntity<Page<Task>> getAllTask(
+            @RequestParam(required = false) TaskStatus status,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Page<Task> tasks = taskService.getAllTask(status, pageable);
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateTask(@PathVariable String id, @RequestBody Task updatedTask,
+                                        @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task task = taskService.updateTask(id, updatedTask, user.getId());
+            return new ResponseEntity<>(task, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error updating task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteTask(@PathVariable String id, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            taskService.deleteTask(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error deleting task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/complete/{id}")
+    public ResponseEntity<?> completeTask(@PathVariable String id, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task task = taskService.completeTask(id);
+            return new ResponseEntity<>(task, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error completing task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/history/{taskId}")
+    public ResponseEntity<List<TaskHistory>> getTaskHistory(
+            @PathVariable String taskId,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        List<TaskHistory> history = taskService.getTaskHistory(taskId);
+        return new ResponseEntity<>(history, HttpStatus.OK);
+    }
+}
+package com.anvith.task_service.service;
+
+import com.anvith.task_service.entity.Task;
+import com.anvith.task_service.entity.TaskHistory;
+import com.anvith.task_service.entity.TaskStatus;
+import com.anvith.task_service.repository.TaskHistoryRepository;
+import com.anvith.task_service.repository.TaskRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.query.Query;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class TaskService {
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private TaskHistoryRepository taskHistoryRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    public Task createTask(Task task, String requestRole) throws Exception {
+        if (!requestRole.equals("ROLE_ADMIN")) {
+            throw new Exception("Only Admin can create the class.");
+        }
+        if (task.getAssignedUserIds() != null && !task.getAssignedUserIds().isEmpty()) {
+            task.setStatus(TaskStatus.ASSIGNED);
+        } else {
+            // Decide if tasks open to all should also be ASSIGNED immediately or stay PENDING
+            // For now, let's assume they also become ASSIGNED if you want them submittable right away
+            task.setStatus(TaskStatus.ASSIGNED);
+            // Or, if they should require an explicit assignment step later:
+            // task.setStatus(TaskStatus.PENDING);
+        }
+        task.setCreatedAt(LocalDateTime.now());
+        return taskRepository.save(task);
+    }
+
+    public Task getTaskById(String id) throws Exception { // Changed Long to String
+        return taskRepository.findById(id).orElseThrow(() -> new Exception("Task Not Found with ID: " + id));
+    }
+
+    public Page<Task> getAllTask(TaskStatus status, Pageable pageable) {
+        if (status != null) {
+            return taskRepository.findByStatus(status, pageable);
+        }
+        return taskRepository.findAll(pageable); // Return all tasks if no status filter
+    }
+
+    public Task updateTask(String id, Task updatedTask, String userId) throws Exception {
+        Task existingTask = getTaskById(id);
+        if (updatedTask.getTitle() != null && !updatedTask.getTitle().equals(existingTask.getTitle())) {
+            taskHistoryRepository.save(new TaskHistory(id, "title", existingTask.getTitle(), updatedTask.getTitle()));
+            existingTask.setTitle(updatedTask.getTitle());
+        }
+        if (updatedTask.getImage() != null) {
+            taskHistoryRepository.save(new TaskHistory(id, "image", existingTask.getImage(), updatedTask.getImage()));
+            existingTask.setImage(updatedTask.getImage());
+        }
+        if (updatedTask.getDescription() != null) {
+            taskHistoryRepository.save(new TaskHistory(id, "description", existingTask.getDescription(), updatedTask.getDescription()));
+            existingTask.setDescription(updatedTask.getDescription());
+        }
+        if (updatedTask.getStatus() != null && !updatedTask.getStatus().equals(existingTask.getStatus())) {
+            taskHistoryRepository.save(new TaskHistory(id, "status", existingTask.getStatus().toString(), updatedTask.getStatus().toString()));
+            existingTask.setStatus(updatedTask.getStatus());
+        } else if (existingTask.getStatus() != TaskStatus.DONE) {
+            // Ensure the task remains ASSIGNED unless explicitly set to DONE
+            existingTask.setStatus(TaskStatus.ASSIGNED);
+        }
+        if (updatedTask.getDeadline() != null) {
+            taskHistoryRepository.save(new TaskHistory(id, "deadline", existingTask.getDeadline().toString(), updatedTask.getDeadline().toString()));
+            existingTask.setDeadline(updatedTask.getDeadline());
+        }
+        if (updatedTask.getAssignedUserIds() != null) {
+            String oldAssigned = existingTask.getAssignedUserIds() != null ? String.join(",", existingTask.getAssignedUserIds()) : "None";
+            String newAssigned = updatedTask.getAssignedUserIds() != null ? String.join(",", updatedTask.getAssignedUserIds()) : "None";
+            taskHistoryRepository.save(new TaskHistory(id, "assignedUserIds", oldAssigned, newAssigned));
+            existingTask.setAssignedUserIds(updatedTask.getAssignedUserIds());
+        }
+        return taskRepository.save(existingTask);
+    }
+
+    public Page<Task> getVisibleTasksForUser(String userId, TaskStatus status, Pageable pageable) {
+        Query query = new Query();
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("assignedUserIds").is(userId),
+                Criteria.where("assignedUserIds").size(0)
+        );
+        if (status != null) {
+            criteria.and("status").is(status);
+        } else {
+            criteria.and("status").is(TaskStatus.ASSIGNED); // Default to ASSIGNED tasks
+        }
+        query.addCriteria(criteria);
+        query.with(pageable);
+
+        List<Task> tasks = mongoTemplate.find(query, Task.class);
+        long count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Task.class);
+        return new PageImpl<>(tasks, pageable, count);
+    }
+
+    public void deleteTask(String id) throws Exception { // Changed Long to String
+        getTaskById(id);
+        taskRepository.deleteById(id);
+    }
+
+    public Task assignedTaskToUser(String userId, String taskId) throws Exception {
+        Task task = getTaskById(taskId);
+        List<String> assignedUserIds = task.getAssignedUserIds();
+        if (!assignedUserIds.contains(userId)) {
+            assignedUserIds.add(userId);
+            task.setAssignedUserIds(assignedUserIds);
+            task.setStatus(TaskStatus.ASSIGNED); // Ensure status is set to ASSIGNED
+            taskHistoryRepository.save(new TaskHistory(taskId, "assignedUserIds",
+                    String.join(",", assignedUserIds), String.join(",", assignedUserIds) + "," + userId));
+        }
+        return taskRepository.save(task);
+    }
+
+    public Page<Task> assignedUsersTask(String userId, TaskStatus status, Pageable pageable) {
+        Page<Task> allTasks = taskRepository.findByAssignedUserIdsContaining(userId, pageable);
+        return allTasks.map(task -> {
+            if (status != null && !task.getStatus().equals(status)) {
+                return null;
+            }
+            return task;
+        });
+    }
+
+    public Task completeTask(String taskId) throws Exception { // Changed Long to String
+        Task task = getTaskById(taskId);
+        task.setStatus(TaskStatus.DONE);
+        return taskRepository.save(task);
+    }
+
+    public List<TaskHistory> getTaskHistory(String taskId) throws Exception {
+        getTaskById(taskId); // Validate task exists
+        return taskHistoryRepository.findByTaskId(taskId);
+    }
+}

@@ -20,7 +20,7 @@ const CardStat = ({ title, value, icon: Icon, color = 'cyan', trend, delay = 0 }
       <div className="flex items-center justify-between">
         <div>
           <p className="text-slate-400 text-sm font-medium">{title}</p>
-          <motion.p 
+          <motion.p
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: delay + 0.2, type: 'spring' }}

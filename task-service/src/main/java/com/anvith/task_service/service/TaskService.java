@@ -100,7 +100,7 @@ public class TaskService {
         if (status != null) {
             criteria.and("status").is(status);
         } else {
-            criteria.and("status").is(TaskStatus.ASSIGNED); // Default to ASSIGNED tasks
+            criteria.and("status").in(TaskStatus.ASSIGNED, TaskStatus.DONE);
         }
         query.addCriteria(criteria);
         query.with(pageable);

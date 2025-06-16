@@ -76,6 +76,7 @@ export const taskAPI = {
   completeTask: (id) => api.put(`/api/tasks/complete/${id}`),
   deleteTask: (id) => api.delete(`/api/tasks/delete/${id}`),
   getTaskHistory: (taskId) => api.get(`/api/tasks/history/${taskId}`),
+  getMyTasks: (status) => axios.get(`/api/tasks/my-tasks?status=${status}`),
 };
 
 // Submission API
