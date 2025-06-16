@@ -6,7 +6,8 @@ spring:
     name: USER-SERVICE
   data:
     mongodb:
-      uri: mongodb://localhost:27017/USER
+#      uri: mongodb://localhost:27017/USER
+      uri: mongodb+srv://anvithsg2004:Ani%402004@cluster0.xf9on0f.mongodb.net/USER?retryWrites=true&w=majority&appName=Cluster0&connectTimeoutMS=30000&timeoutMS=30000
 
 eureka:
   instance:
