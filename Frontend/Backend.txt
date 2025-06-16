@@ -1,0 +1,2651 @@
+package com.anvith.gatway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class GatwayApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(GatwayApplication.class, args);
+	}
+
+}
+# Server Configuration
+server.port=8085
+
+# Application Configuration
+spring.application.name=API-GATEWAY
+
+# USER-SERVICE: auth
+spring.cloud.gateway.routes[0].id=user-service-auth
+spring.cloud.gateway.routes[0].uri=lb://USER-SERVICE
+spring.cloud.gateway.routes[0].predicates[0]=Path=/auth/**
+
+# USER-SERVICE: profile
+spring.cloud.gateway.routes[1].id=user-service-api
+spring.cloud.gateway.routes[1].uri=lb://USER-SERVICE
+spring.cloud.gateway.routes[1].predicates[0]=Path=/api/user/**
+
+# TASK-SERVICE
+spring.cloud.gateway.routes[2].id=task-service
+spring.cloud.gateway.routes[2].uri=lb://TASK-SERVICE
+spring.cloud.gateway.routes[2].predicates[0]=Path=/api/tasks/**
+
+# SUBMISSION-SERVICE: Submission
+spring.cloud.gateway.routes[3].id=submission-service
+spring.cloud.gateway.routes[3].uri=lb://SUBMISSION-SERVICE
+spring.cloud.gateway.routes[3].predicates[0]=Path=/api/submission/**
+
+# SUBMISSION-SERVICE: Test
+spring.cloud.gateway.routes[4].id=submission-service-test
+spring.cloud.gateway.routes[4].uri=lb://SUBMISSION-SERVICE
+spring.cloud.gateway.routes[4].predicates[0]=Path=/api/test/**
+
+# Global CORS Configuration (use origin patterns instead of '*' with credentials)
+spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-origin-patterns=http://localhost:5173
+spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-headers=*
+spring.cloud.gateway.globalcors.cors-configurations.[/**].allow-credentials=true
+spring.cloud.gateway.globalcors.cors-configurations.[/**].max-age=3600
+
+# Eureka Configuration
+eureka.instance.prefer-ip-address=true
+eureka.client.fetch-registry=true
+eureka.client.register-with-eureka=true
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+# Enable debug logging
+logging.level.org.springframework.cloud.gateway=DEBUG
+logging.level.org.springframework.web=DEBUG
+logging.level.reactor.netty=DEBUG
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.5</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.anvith</groupId>
+    <artifactId>gatway</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>gatway</name>
+    <description>Demo project for Spring Boot</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+package com.example.ServiceRegistry.ServiceRegistry;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication
+@EnableEurekaServer
+public class ServiceRegistryApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ServiceRegistryApplication.class, args);
+    }
+
+}
+spring.application.name=eureka-ServiceRegistry
+server.port=8761
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version> <!-- Compatible with Spring Cloud 2023.0.5 -->
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.example.ServiceRegistry</groupId>
+    <artifactId>ServiceRegistry</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>ServiceRegistry</name>
+    <description>This is Service Registry.</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.5</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <!-- Add Config Client Dependency -->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.cloud</groupId>-->
+<!--            <artifactId>spring-cloud-starter-config</artifactId>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+package com.anvith.submission_service.controller;
+
+import com.anvith.submission_service.entity.Submission;
+import com.anvith.submission_service.entity.SubmissionComment;
+import com.anvith.submission_service.entity.SubmissionStatus;
+import com.anvith.submission_service.entity.User;
+import com.anvith.submission_service.fiegnClient.TaskServiceClient;
+import com.anvith.submission_service.fiegnClient.UserServiceClient;
+import com.anvith.submission_service.serivces.SubmissionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/submission")
+public class SubmissionController {
+
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+    @Autowired
+    private TaskServiceClient taskServiceClient;
+
+    @Autowired
+    private SubmissionService submissionService;
+
+    @PostMapping("/submit-task")
+    public ResponseEntity<Submission> submitTask(
+            @RequestParam String taskId,
+            @RequestParam String gitHubLink,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Submission submission = submissionService.submitTask(taskId, gitHubLink, user.getId(), jwt);
+        return new ResponseEntity<>(submission, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/get-all-submissions")
+    public ResponseEntity<Page<Submission>> getAllSubmissions(
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Page<Submission> submissions = submissionService.getAllTaskSubmission(jwt, pageable);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
+    }
+
+    @GetMapping("/get-task-submissions-by-task-id/{taskId}")
+    public ResponseEntity<Page<Submission>> getTaskSubmissionsByTaskId(
+            @PathVariable String taskId,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Page<Submission> submissions = submissionService.getTaskSubmissionsByTaskId(taskId, jwt, pageable);
+        return new ResponseEntity<>(submissions, HttpStatus.OK);
+    }
+
+    @PutMapping("/accept-decline-submission/{submissionId}")
+    public ResponseEntity<Submission> acceptDeclineSubmission(
+            @PathVariable String submissionId,
+            @RequestParam("status") String status,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        // Validate status
+        try {
+            SubmissionStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new Exception("Invalid status: " + status + ". Must be PENDING, ACCEPTED, or REJECTED");
+        }
+
+        User user = userServiceClient.getUserProfile(jwt);
+        Submission submission = submissionService.acceptDeclineSubmission(submissionId, status, jwt);
+        return new ResponseEntity<>(submission, HttpStatus.OK);
+    }
+
+    @PostMapping("/comment/{submissionId}")
+    public ResponseEntity<SubmissionComment> addComment(
+            @PathVariable String submissionId,
+            @RequestParam String comment,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        SubmissionComment submissionComment = submissionService.addComment(submissionId, user.getId(), comment, jwt);
+        return new ResponseEntity<>(submissionComment, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/comments/{submissionId}")
+    public ResponseEntity<List<SubmissionComment>> getCommentsBySubmissionId(
+            @PathVariable String submissionId,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        List<SubmissionComment> comments = submissionService.getCommentsBySubmissionId(submissionId, jwt);
+        return new ResponseEntity<>(comments, HttpStatus.OK);
+    }
+}
+package com.anvith.submission_service.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/test")
+public class TestController {
+
+    @GetMapping
+    public ResponseEntity<String> testing() {
+        return new ResponseEntity<>("Working Properly...!", HttpStatus.OK);
+    }
+
+}
+package com.anvith.submission_service.entity;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Document(collection = "SUBMISSIONS")
+public class Submission {
+
+    @Id
+    private String id; // Changed from Long to String
+
+    private String taskId;
+
+    private String gitHubLink;
+
+    private String userId; // Already String, consistent with User entity's id
+
+    private SubmissionStatus status = SubmissionStatus.PENDING;
+
+    private LocalDateTime submissionTime;
+
+    // No-args constructor
+    public Submission() {
+    }
+
+    // Getters and Setters
+
+    public SubmissionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(SubmissionStatus status) {
+        this.status = status;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
+    }
+
+    public String getGitHubLink() {
+        return gitHubLink;
+    }
+
+    public void setGitHubLink(String gitHubLink) {
+        this.gitHubLink = gitHubLink;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public LocalDateTime getSubmissionTime() {
+        return submissionTime;
+    }
+
+    public void setSubmissionTime(LocalDateTime submissionTime) {
+        this.submissionTime = submissionTime;
+    }
+}
+package com.anvith.submission_service.entity;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Document(collection = "SUBMISSION_COMMENTS")
+public class SubmissionComment {
+    @Id
+    private String id;
+    private String submissionId;
+    private String userId;
+    private String comment;
+    private LocalDateTime createdAt;
+
+    // No-arg constructor
+    public SubmissionComment() {}
+
+    // Constructor with fields (except id)
+    public SubmissionComment(String submissionId, String userId, String comment) {
+        this.submissionId = submissionId;
+        this.userId = userId;
+        this.comment = comment;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getters and setters
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getSubmissionId() {
+        return submissionId;
+    }
+
+    public void setSubmissionId(String submissionId) {
+        this.submissionId = submissionId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // Optional: for logging/debugging
+    @Override
+    public String toString() {
+        return "SubmissionComment{" +
+                "id='" + id + '\'' +
+                ", submissionId='" + submissionId + '\'' +
+                ", userId='" + userId + '\'' +
+                ", comment='" + comment + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
+}
+package com.anvith.submission_service.entity;
+
+public enum SubmissionStatus {
+    PENDING,
+    ACCEPTED,
+    REJECTED
+}
+package com.anvith.submission_service.entity;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Task {
+
+    private String id;
+    private String title;
+    private String description;
+    private String image;
+    private String assignedUserId;
+    private List<String> tags = new ArrayList<>();
+    private TaskStatus status;
+    private LocalDateTime deadline;
+    private LocalDateTime createdAt;
+
+    public Task() {
+    }
+
+    public Task(String id, String title, String description, String image, String assignedUserId,
+                List<String> tags, TaskStatus status, LocalDateTime deadline, LocalDateTime createdAt) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.image = image;
+        this.assignedUserId = assignedUserId;
+        this.tags = tags;
+        this.status = status;
+        this.deadline = deadline;
+        this.createdAt = createdAt;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getAssignedUserId() {
+        return assignedUserId;
+    }
+
+    public void setAssignedUserId(String assignedUserId) {
+        this.assignedUserId = assignedUserId;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+}
+package com.anvith.submission_service.entity;
+
+public enum TaskStatus {
+
+    PENDING("PENDING"),
+
+    ASSIGNED("ASSIGNED"),
+
+    DONE("DONE");
+
+    TaskStatus(String done) {
+
+    }
+
+}
+package com.anvith.submission_service.entity;
+
+public class User {
+
+    private String id;
+    private String password;
+    private String email;
+    private String role;
+    private String fullName;
+    private String mobile;
+
+    // No-args constructor
+    public User() {
+    }
+
+    // All-args constructor
+    public User(String id, String password, String email, String role, String fullName, String mobile) {
+        this.id = id;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.fullName = fullName;
+        this.mobile = mobile;
+    }
+
+    // Getters and Setters
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    // toString method
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", mobile='" + mobile + '\'' +
+                '}';
+    }
+}
+package com.anvith.submission_service.entity;
+
+public class User {
+
+    private String id;
+    private String password;
+    private String email;
+    private String role;
+    private String fullName;
+    private String mobile;
+
+    // No-args constructor
+    public User() {
+    }
+
+    // All-args constructor
+    public User(String id, String password, String email, String role, String fullName, String mobile) {
+        this.id = id;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.fullName = fullName;
+        this.mobile = mobile;
+    }
+
+    // Getters and Setters
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    // toString method
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", mobile='" + mobile + '\'' +
+                '}';
+    }
+}
+package com.anvith.submission_service.fiegnClient;
+
+import com.anvith.submission_service.entity.Task;
+import com.anvith.submission_service.entity.TaskStatus;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@FeignClient(name = "TASK-SERVICE")
+public interface TaskServiceClient {
+
+    @PostMapping("/api/tasks/create-user")
+    Task createTask(@RequestBody Task task, @RequestHeader("Authorization") String jwt);
+
+    @GetMapping("/api/tasks/get-task/{id}")
+    Task getTaskById(@PathVariable("id") String id, @RequestHeader("Authorization") String jwt);
+
+    @GetMapping("/api/tasks/assigned-users-task/{userId}")
+    List<Task> getAssignedTasksByUserId(@PathVariable("userId") String userId,
+                                        @RequestParam(required = false) TaskStatus status,
+                                        @RequestHeader("Authorization") String jwt);
+
+    @PutMapping("/api/tasks/{userId}/user/{taskId}/assigned")
+    Task assignTaskToUser(@PathVariable("userId") String userId,
+                          @PathVariable("taskId") String taskId,
+                          @RequestHeader("Authorization") String jwt);
+
+    @GetMapping("/api/tasks/get-all-users")
+    List<Task> getAllTasks(@RequestParam(required = false) TaskStatus status,
+                           @RequestHeader("Authorization") String jwt);
+
+    @PutMapping("/api/tasks/update/{id}")
+    Task updateTask(@PathVariable("id") String id,
+                    @RequestBody Task updatedTask,
+                    @RequestHeader("Authorization") String jwt);
+
+    @DeleteMapping("/api/tasks/delete/{id}")
+    void deleteTask(@PathVariable("id") String id, @RequestHeader("Authorization") String jwt);
+
+    @PutMapping("/api/tasks/complete/{id}")
+    Task completeTask(@PathVariable("id") String id, @RequestHeader("Authorization") String jwt);
+}
+package com.anvith.submission_service.fiegnClient;
+
+import com.anvith.submission_service.entity.User;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+
+import java.util.List;
+
+@FeignClient(name = "USER-SERVICE", path = "/api/user")
+public interface UserServiceClient {
+
+    @GetMapping("/profile")
+    User getUserProfile(@RequestHeader("Authorization") String authHeader);
+
+    @GetMapping("/all")
+    List<User> getAllUsers();
+}
+package com.anvith.submission_service.repository;
+
+import com.anvith.submission_service.entity.SubmissionComment;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import java.util.List;
+
+public interface SubmissionCommentRepository extends MongoRepository<SubmissionComment, String> {
+    List<SubmissionComment> findBySubmissionId(String submissionId);
+}
+package com.anvith.submission_service.repository;
+
+import com.anvith.submission_service.entity.Submission;
+import org.springframework.data.domain.Page;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+public interface SubmissionRepository extends MongoRepository<Submission, String> {
+    List<Submission> findByTaskId(String taskId);
+    Page<Submission> findAll(Pageable pageable); // Add pagination
+    Page<Submission> findByTaskId(String taskId, Pageable pageable); // Add pagination
+}
+package com.anvith.submission_service.serivces;
+
+import com.anvith.submission_service.entity.Submission;
+import com.anvith.submission_service.entity.SubmissionComment;
+import com.anvith.submission_service.entity.SubmissionStatus;
+import com.anvith.submission_service.entity.Task;
+import com.anvith.submission_service.fiegnClient.TaskServiceClient;
+import com.anvith.submission_service.fiegnClient.UserServiceClient;
+import com.anvith.submission_service.repository.SubmissionCommentRepository;
+import com.anvith.submission_service.repository.SubmissionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class SubmissionService {
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private TaskServiceClient taskServiceClient;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+    @Autowired
+    private SubmissionCommentRepository commentRepository;
+
+    public Submission submitTask(String taskId, String gitHubLink, String userId, String jwt) throws Exception {
+        Task task = taskServiceClient.getTaskById(taskId, jwt);
+        if (task == null) {
+            throw new Exception("Task Not Found with ID: " + taskId);
+        }
+        if (!userId.equals(task.getAssignedUserId())) {
+            throw new Exception("Task is not assigned to this user");
+        }
+        // Check for existing submission
+        List<Submission> existingSubmissions = submissionRepository.findByTaskId(taskId);
+        if (existingSubmissions.stream().anyMatch(s -> s.getUserId().equals(userId))) {
+            throw new Exception("Submission already exists for this task by this user");
+        }
+
+        Submission submission = new Submission();
+        submission.setTaskId(taskId);
+        submission.setUserId(userId);
+        submission.setGitHubLink(gitHubLink);
+        submission.setSubmissionTime(LocalDateTime.now());
+        return submissionRepository.save(submission);
+    }
+
+    public Submission getTaskSubmissionById(String submissionId, String jwt) throws Exception {
+        return submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new Exception("Task Submission Not Found with ID: " + submissionId));
+    }
+
+    public Page<Submission> getAllTaskSubmission(String jwt, Pageable pageable) {
+        return submissionRepository.findAll(pageable);
+    }
+
+    public Page<Submission> getTaskSubmissionsByTaskId(String taskId, String jwt, Pageable pageable) {
+        return submissionRepository.findByTaskId(taskId, pageable);
+    }
+
+    public SubmissionComment addComment(String submissionId, String userId, String comment, String jwt) throws Exception {
+        Submission submission = getTaskSubmissionById(submissionId, jwt);
+        SubmissionComment submissionComment = new SubmissionComment(submissionId, userId, comment);
+        return commentRepository.save(submissionComment);
+    }
+
+    public Submission acceptDeclineSubmission(String submissionId, String statusStr, String jwt) throws Exception {
+        Submission submission = getTaskSubmissionById(submissionId, jwt);
+        SubmissionStatus status = SubmissionStatus.valueOf(statusStr.toUpperCase());
+        submission.setStatus(status);
+
+        if (status == SubmissionStatus.ACCEPTED) {
+            taskServiceClient.completeTask(submission.getTaskId(), jwt); // Completes task if accepted
+        }
+
+        return submissionRepository.save(submission);
+    }
+
+    public List<SubmissionComment> getCommentsBySubmissionId(String submissionId, String jwt) throws Exception {
+        getTaskSubmissionById(submissionId, jwt); // Validate submission exists
+        return commentRepository.findBySubmissionId(submissionId);
+    }
+}
+server:
+  port: 8082
+
+spring:
+  application:
+    name: SUBMISSION-SERVICE
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/SUBMISSION
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.anvith</groupId>
+    <artifactId>submission-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>submission-service</name>
+    <description>Submission Service for Task Project</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+package com.anvith.task_service.config;
+
+import feign.RequestInterceptor;
+import feign.RequestTemplate;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+@Configuration
+public class FeignClientConfig {
+
+    @Bean
+    public RequestInterceptor requestInterceptor() {
+        return requestTemplate -> {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                String authHeader = attributes.getRequest().getHeader(HttpHeaders.AUTHORIZATION);
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    requestTemplate.header(HttpHeaders.AUTHORIZATION, authHeader);
+                }
+            }
+        };
+    }
+}
+package com.anvith.task_service.controller;
+
+import com.anvith.task_service.entity.Task;
+import com.anvith.task_service.entity.TaskHistory;
+import com.anvith.task_service.entity.TaskStatus;
+import com.anvith.task_service.entity.User;
+import com.anvith.task_service.feignClient.UserServiceClient;
+import com.anvith.task_service.service.TaskService;
+import feign.FeignException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/tasks")
+public class TaskController {
+
+    @Autowired
+    private TaskService taskService;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+    @GetMapping("/visible-tasks")
+    public ResponseEntity<Page<Task>> getVisibleTasks(
+            @RequestParam(required = false) TaskStatus status,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            Page<Task> tasks = taskService.getAllTask(status, pageable);
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
+        } else {
+            Page<Task> tasks = taskService.getVisibleTasksForUser(user.getId(), status, pageable);
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
+        }
+    }
+
+    @PostMapping("/create-user")
+    public ResponseEntity<?> createTask(@RequestBody Task task, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task createTask = taskService.createTask(task, user.getRole());
+            return new ResponseEntity<>(createTask, HttpStatus.CREATED);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error creating task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/get-task/{id}")
+    public ResponseEntity<?> getTaskById(@PathVariable String id, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task task = taskService.getTaskById(id);
+            return new ResponseEntity<>(task, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error retrieving task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/assigned-users-task/{userId}")
+    public ResponseEntity<Page<Task>> assignedUsersTask(
+            @PathVariable String userId,
+            @RequestParam(required = false) TaskStatus status,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        if (!user.getId().equals(userId)) {
+            throw new Exception("Unauthorized: User ID mismatch");
+        }
+        Page<Task> tasks = taskService.assignedUsersTask(userId, status, pageable);
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
+    }
+
+    @PutMapping("/{userId}/user/{taskId}/assigned")
+    public ResponseEntity<?> assignTaskToUser(@PathVariable String userId, @PathVariable String taskId,
+                                              @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task existingTask = taskService.getTaskById(taskId);
+            List<String> assignedUserIds = existingTask.getAssignedUserIds();
+            if (!assignedUserIds.contains(userId)) {
+                assignedUserIds.add(userId);
+                existingTask.setAssignedUserIds(assignedUserIds);
+            }
+            Task updatedTask = taskService.updateTask(taskId, existingTask, user.getId());
+            return new ResponseEntity<>(updatedTask, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error assigning task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/get-all-users")
+    public ResponseEntity<Page<Task>> getAllTask(
+            @RequestParam(required = false) TaskStatus status,
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        Page<Task> tasks = taskService.getAllTask(status, pageable);
+        return new ResponseEntity<>(tasks, HttpStatus.OK);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateTask(@PathVariable String id, @RequestBody Task updatedTask,
+                                        @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task task = taskService.updateTask(id, updatedTask, user.getId());
+            return new ResponseEntity<>(task, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error updating task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteTask(@PathVariable String id, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            taskService.deleteTask(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error deleting task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/complete/{id}")
+    public ResponseEntity<?> completeTask(@PathVariable String id, @RequestHeader("Authorization") String jwt) {
+        try {
+            User user = userServiceClient.getUserProfile(jwt);
+            Task task = taskService.completeTask(id);
+            return new ResponseEntity<>(task, HttpStatus.OK);
+        } catch (FeignException.ServiceUnavailable e) {
+            return new ResponseEntity<>("User service is unavailable", HttpStatus.SERVICE_UNAVAILABLE);
+        } catch (FeignException.Unauthorized e) {
+            return new ResponseEntity<>("Unauthorized: Invalid or missing JWT token", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error completing task: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/history/{taskId}")
+    public ResponseEntity<List<TaskHistory>> getTaskHistory(
+            @PathVariable String taskId,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userServiceClient.getUserProfile(jwt);
+        List<TaskHistory> history = taskService.getTaskHistory(taskId);
+        return new ResponseEntity<>(history, HttpStatus.OK);
+    }
+}
+package com.anvith.task_service.entity;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Document(collection = "TASKS")
+public class Task {
+
+    @Id
+    private String id; // Changed to String to match MongoDB ObjectId
+    private String title;
+    private String description;
+    private String image;
+    private List<String> assignedUserIds = new ArrayList<>();
+    private List<String> tags = new ArrayList<>();
+    private TaskStatus status;
+    private LocalDateTime deadline;
+    private LocalDateTime createdAt;
+
+    public Task() {
+    }
+
+    public Task(String id, String title, String description, String image,
+                List<String> assignedUserIds, List<String> tags, TaskStatus status,
+                LocalDateTime deadline, LocalDateTime createdAt) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.image = image;
+        this.assignedUserIds = assignedUserIds;
+        this.tags = tags;
+        this.status = status;
+        this.deadline = deadline;
+        this.createdAt = createdAt;
+    }
+
+
+    public List<String> getAssignedUserIds() {
+        return assignedUserIds;
+    }
+
+    public void setAssignedUserIds(List<String> assignedUserIds) {
+        this.assignedUserIds = assignedUserIds;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+}
+package com.anvith.task_service.entity;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Document(collection = "TASK_HISTORY")
+public class TaskHistory {
+    @Id
+    private String id;
+    private String taskId;
+    private String fieldChanged;
+    private String oldValue;
+    private String newValue;
+    private LocalDateTime changedAt;
+
+    // Default constructor
+    public TaskHistory() {}
+
+    // Parameterized constructor
+    public TaskHistory(String taskId, String fieldChanged, String oldValue, String newValue) {
+        this.taskId = taskId;
+        this.fieldChanged = fieldChanged;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
+        this.changedAt = LocalDateTime.now();
+    }
+
+    // Getters and Setters
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
+    }
+
+    public String getFieldChanged() {
+        return fieldChanged;
+    }
+
+    public void setFieldChanged(String fieldChanged) {
+        this.fieldChanged = fieldChanged;
+    }
+
+    public String getOldValue() {
+        return oldValue;
+    }
+
+    public void setOldValue(String oldValue) {
+        this.oldValue = oldValue;
+    }
+
+    public String getNewValue() {
+        return newValue;
+    }
+
+    public void setNewValue(String newValue) {
+        this.newValue = newValue;
+    }
+
+    public LocalDateTime getChangedAt() {
+        return changedAt;
+    }
+
+    public void setChangedAt(LocalDateTime changedAt) {
+        this.changedAt = changedAt;
+    }
+
+    @Override
+    public String toString() {
+        return "TaskHistory{" +
+                "id='" + id + '\'' +
+                ", taskId='" + taskId + '\'' +
+                ", fieldChanged='" + fieldChanged + '\'' +
+                ", oldValue='" + oldValue + '\'' +
+                ", newValue='" + newValue + '\'' +
+                ", changedAt=" + changedAt +
+                '}';
+    }
+}
+package com.anvith.task_service.entity;
+
+public enum TaskStatus {
+
+    PENDING("PENDING"),
+
+    ASSIGNED("ASSIGNED"),
+
+    DONE("DONE");
+
+    TaskStatus(String done) {
+
+    }
+
+}
+package com.anvith.task_service.entity;
+
+public class User {
+
+    private String id;
+    private String password;
+    private String email;
+    private String role;
+    private String fullName;
+    private String mobile;
+
+    // No-args constructor
+    public User() {
+    }
+
+    // All-args constructor
+    public User(String id, String password, String email, String role, String fullName, String mobile) {
+        this.id = id;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.fullName = fullName;
+        this.mobile = mobile;
+    }
+
+    // Getters and Setters
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    // toString method
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", mobile='" + mobile + '\'' +
+                '}';
+    }
+}
+package com.anvith.task_service.feignClient;
+
+import com.anvith.task_service.entity.User;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+
+import java.util.List;
+
+@FeignClient(name = "USER-SERVICE", path = "/api/user")
+public interface UserServiceClient {
+
+    @GetMapping("/profile")
+    User getUserProfile(@RequestHeader("Authorization") String authHeader);
+
+    @GetMapping("/all")
+    List<User> getAllUsers();
+}
+package com.anvith.task_service.repository;
+
+import com.anvith.task_service.entity.TaskHistory;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import java.util.List;
+
+public interface TaskHistoryRepository extends MongoRepository<TaskHistory, String> {
+    List<TaskHistory> findByTaskId(String taskId);
+}
+package com.anvith.task_service.repository;
+
+import com.anvith.task_service.entity.Task;
+import org.springframework.data.domain.Page;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
+public interface TaskRepository extends MongoRepository<Task, String> {
+    List<Task> findByAssignedUserIdsContaining(String userId); // Updated method
+    Page<Task> findAll(Pageable pageable);
+    Page<Task> findByAssignedUserIdsContaining(String userId, Pageable pageable); // Updated method
+}
+package com.anvith.task_service.service;
+
+import com.anvith.task_service.entity.Task;
+import com.anvith.task_service.entity.TaskHistory;
+import com.anvith.task_service.entity.TaskStatus;
+import com.anvith.task_service.repository.TaskHistoryRepository;
+import com.anvith.task_service.repository.TaskRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.query.Query;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+public class TaskService {
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private TaskHistoryRepository taskHistoryRepository;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    public Task createTask(Task task, String requestRole) throws Exception {
+        if (!requestRole.equals("ROLE_ADMIN")) {
+            throw new Exception("Only Admin can create the class.");
+        }
+        task.setStatus(TaskStatus.PENDING);
+        task.setCreatedAt(LocalDateTime.now());
+        return taskRepository.save(task);
+    }
+
+    public Task getTaskById(String id) throws Exception { // Changed Long to String
+        return taskRepository.findById(id).orElseThrow(() -> new Exception("Task Not Found with ID: " + id));
+    }
+
+    public Page<Task> getAllTask(TaskStatus status, Pageable pageable) {
+        Page<Task> allTasks = taskRepository.findAll(pageable);
+        return allTasks.map(task -> {
+            if (status != null && !task.getStatus().equals(status)) {
+                return null; // Filter out non-matching statuses
+            }
+            return task;
+        });
+    }
+
+    public Task updateTask(String id, Task updatedTask, String userId) throws Exception {
+        Task existingTask = getTaskById(id);
+        if (updatedTask.getTitle() != null && !updatedTask.getTitle().equals(existingTask.getTitle())) {
+            taskHistoryRepository.save(new TaskHistory(id, "title", existingTask.getTitle(), updatedTask.getTitle()));
+            existingTask.setTitle(updatedTask.getTitle());
+        }
+        if (updatedTask.getImage() != null) {
+            taskHistoryRepository.save(new TaskHistory(id, "image", existingTask.getImage(), updatedTask.getImage()));
+            existingTask.setImage(updatedTask.getImage());
+        }
+        if (updatedTask.getDescription() != null) {
+            taskHistoryRepository.save(new TaskHistory(id, "description", existingTask.getDescription(), updatedTask.getDescription()));
+            existingTask.setDescription(updatedTask.getDescription());
+        }
+        if (updatedTask.getStatus() != null && !updatedTask.getStatus().equals(existingTask.getStatus())) {
+            taskHistoryRepository.save(new TaskHistory(id, "status", existingTask.getStatus().toString(), updatedTask.getStatus().toString()));
+            existingTask.setStatus(updatedTask.getStatus());
+        }
+        if (updatedTask.getDeadline() != null) {
+            taskHistoryRepository.save(new TaskHistory(id, "deadline", existingTask.getDeadline().toString(), updatedTask.getDeadline().toString()));
+            existingTask.setDeadline(updatedTask.getDeadline());
+        }
+        if (updatedTask.getAssignedUserIds() != null) {
+            String oldAssigned = existingTask.getAssignedUserIds() != null ? String.join(",", existingTask.getAssignedUserIds()) : "None";
+            String newAssigned = updatedTask.getAssignedUserIds() != null ? String.join(",", updatedTask.getAssignedUserIds()) : "None";
+            taskHistoryRepository.save(new TaskHistory(id, "assignedUserIds", oldAssigned, newAssigned));
+            existingTask.setAssignedUserIds(updatedTask.getAssignedUserIds());
+        }
+        return taskRepository.save(existingTask);
+    }
+
+    public Page<Task> getVisibleTasksForUser(String userId, TaskStatus status, Pageable pageable) {
+        Query query = new Query();
+        Criteria criteria = new Criteria().orOperator(
+                Criteria.where("assignedUserIds").is(userId),
+                Criteria.where("assignedUserIds").size(0)
+        );
+        if (status != null) {
+            criteria.and("status").is(status);
+        }
+        query.addCriteria(criteria);
+        query.with(pageable);
+
+        List<Task> tasks = mongoTemplate.find(query, Task.class);
+        long count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), Task.class);
+        return new PageImpl<>(tasks, pageable, count);
+    }
+
+    public void deleteTask(String id) throws Exception { // Changed Long to String
+        getTaskById(id);
+        taskRepository.deleteById(id);
+    }
+
+    public Task assignedTaskToUser(String userId, String taskId) throws Exception {
+        Task task = getTaskById(taskId);
+        task.getAssignedUserIds().add(userId);
+        task.setStatus(TaskStatus.ASSIGNED);
+        return taskRepository.save(task);
+    }
+
+    public Page<Task> assignedUsersTask(String userId, TaskStatus status, Pageable pageable) {
+        Page<Task> allTasks = taskRepository.findByAssignedUserIdsContaining(userId, pageable);
+        return allTasks.map(task -> {
+            if (status != null && !task.getStatus().equals(status)) {
+                return null;
+            }
+            return task;
+        });
+    }
+
+    public Task completeTask(String taskId) throws Exception { // Changed Long to String
+        Task task = getTaskById(taskId);
+        task.setStatus(TaskStatus.DONE);
+        return taskRepository.save(task);
+    }
+
+    public List<TaskHistory> getTaskHistory(String taskId) throws Exception {
+        getTaskById(taskId); // Validate task exists
+        return taskHistoryRepository.findByTaskId(taskId);
+    }
+}
+server:
+  port: 8081
+
+spring:
+  application:
+    name: TASK-SERVICE
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/TASK
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.anvith</groupId>
+    <artifactId>task-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>task-service</name>
+    <description>Task Service</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+package com.anvith.user_service.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.time.Duration;
+import java.util.List;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.sessionManagement(
+                        management -> management.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                ).authorizeRequests(
+                        Authorize -> Authorize
+                                .requestMatchers("/api/**")
+                                .authenticated()
+                                .anyRequest()
+                                .permitAll()
+                ).addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.disable())
+                .httpBasic(Customizer.withDefaults())
+                .formLogin(Customizer.withDefaults());
+
+        return httpSecurity.build();
+    }
+
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration cfg = new CorsConfiguration();
+//        cfg.setAllowedOriginPatterns(List.of("http://localhost:5173"));
+//        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        cfg.setAllowedHeaders(List.of("*"));
+//        cfg.setAllowCredentials(true);          // okay because no wildcard
+//        cfg.setMaxAge(Duration.ofHours(1));
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", cfg);
+//        return source;
+//    }
+
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(Arrays.asList("*")); // Adjust to your frontend URL
+//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        configuration.setAllowedHeaders(Arrays.asList("*"));
+//        configuration.setAllowCredentials(true);
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+}
+package com.anvith.user_service.config;
+
+public class JwtConstant {
+    public static final String SECRET_KEY = "wevvaevbbbabvdfvbvdafbvdafvbadbvadfvbadfvdfvafafvvf";
+    public static final String JWT_HEADER = "Authorization";
+}
+package com.anvith.user_service.config;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+
+@Component
+public class JwtProvider {
+
+    public String generateToken(Authentication authentication) {
+        String email = authentication.getName();
+        String authorities = populateAuthorities(authentication.getAuthorities());
+        SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+        return Jwts.builder()
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+                .claim("email", email)
+                .claim("authorities", authorities)
+                .signWith(key, SignatureAlgorithm.HS384)
+                .compact();
+    }
+
+    public String getEmailFromJwtToken(String jwt) {
+        try {
+            SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(jwt)
+                    .getBody();
+            return String.valueOf(claims.get("email"));
+        } catch (Exception e) {
+            System.err.println("Error parsing JWT: " + e.getMessage()); // Debug log
+            throw new IllegalArgumentException("Invalid JWT token", e);
+        }
+    }
+
+    private String populateAuthorities(java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> authorities) {
+        return String.join(",", authorities.stream().map(Object::toString).toList());
+    }
+}
+package com.anvith.user_service.config;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+
+public class JwtTokenValidator extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String authHeader = request.getHeader(JwtConstant.JWT_HEADER);
+        System.out.println("Authorization Header: " + authHeader); // Debug log
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7).trim(); // Remove "Bearer " and trim spaces
+            System.out.println("Validating JWT: " + jwt); // Debug log
+            try {
+                SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(key)
+                        .build()
+                        .parseClaimsJws(jwt)
+                        .getBody();
+                System.out.println("Claims: " + claims); // Debug log
+                String email = String.valueOf(claims.get("email"));
+                String authorities = String.valueOf(claims.get("authorities"));
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        email,
+                        null,
+                        AuthorityUtils.commaSeparatedStringToAuthorityList(authorities)
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (Exception e) {
+                System.err.println("JWT Validation Error: " + e.getMessage()); // Debug log
+                throw new BadCredentialsException("Invalid Token", e);
+            }
+        } else {
+            System.out.println("Invalid or missing Authorization header: " + authHeader); // Debug log
+        }
+        filterChain.doFilter(request, response);
+    }
+}
+package com.anvith.user_service.controller;
+
+import com.anvith.user_service.config.JwtProvider;
+import com.anvith.user_service.entity.AuthResponse;
+import com.anvith.user_service.entity.LoginRequest;
+import com.anvith.user_service.entity.User;
+import com.anvith.user_service.repository.UserRepository;
+import com.anvith.user_service.service.CustomerUserServiceImplementation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CustomerUserServiceImplementation userServiceImplementation;
+
+    @Autowired
+    private JwtProvider jwtProvider; // Inject JwtProvider instance
+
+    @PostMapping("/signup")
+    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user) throws Exception {
+        String email = user.getEmail();
+        String password = user.getPassword();
+        String fullName = user.getFullName();
+        String mobile = user.getMobile();
+        String roles = user.getRole();
+
+        User isEmailExist = userRepository.findByEmail(email);
+        if (isEmailExist != null) {
+            throw new Exception("Email is already exist");
+        }
+
+        User createdUser = new User();
+        createdUser.setEmail(email);
+        createdUser.setFullName(fullName);
+        createdUser.setRole(roles);
+        createdUser.setMobile(mobile);
+        createdUser.setPassword(passwordEncoder.encode(password));
+
+        User savedUser = userRepository.save(createdUser);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(email, null);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtProvider.generateToken(authentication); // Use injected instance
+
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setJwt(token);
+        authResponse.setMessage("Register Success");
+        authResponse.setStatus(true);
+
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/signin")
+    public ResponseEntity<AuthResponse> signIn(@RequestBody LoginRequest loginRequest) {
+        String email = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
+
+        Authentication authentication = authenticate(email, password);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtProvider.generateToken(authentication); // Use injected instance
+
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setMessage("Login Success");
+        authResponse.setJwt(token);
+        authResponse.setStatus(true);
+
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
+    private Authentication authenticate(String email, String password) {
+        UserDetails userDetails = userServiceImplementation.loadUserByUsername(email);
+        if (userDetails == null) {
+            throw new BadCredentialsException("Invalid Email");
+        }
+        if (!passwordEncoder.matches(password, userDetails.getPassword())) {
+            throw new BadCredentialsException("Invalid Password");
+        }
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    }
+}
+package com.anvith.user_service.controller;
+
+import com.anvith.user_service.entity.User;
+import com.anvith.user_service.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/user")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @GetMapping("/profile")
+    public ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String authHeader) {
+        User user = userService.getUserProfile(authHeader);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<User> updateUserProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody User updatedUser
+    ) throws Exception {
+        User user = userService.updateUserProfile(authHeader, updatedUser);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String userId) throws Exception {
+        userService.deleteUser(userId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+}
+package com.anvith.user_service.entity;
+
+public class AuthResponse {
+
+    private String jwt;
+    private String message;
+    private Boolean status;
+
+    // No-args constructor
+    public AuthResponse() {
+    }
+
+    // All-args constructor
+    public AuthResponse(String jwt, String message, Boolean status) {
+        this.jwt = jwt;
+        this.message = message;
+        this.status = status;
+    }
+
+    // Getters and Setters
+
+    public String getJwt() {
+        return jwt;
+    }
+
+    public void setJwt(String jwt) {
+        this.jwt = jwt;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Boolean getStatus() {
+        return status;
+    }
+
+    public void setStatus(Boolean status) {
+        this.status = status;
+    }
+
+    // toString method
+
+    @Override
+    public String toString() {
+        return "AuthResponse{" +
+                "jwt='" + jwt + '\'' +
+                ", message='" + message + '\'' +
+                ", status='" + status + '\'' +
+                '}';
+    }
+}
+package com.anvith.user_service.entity;
+
+public class LoginRequest {
+
+    private String email;
+    private String password;
+
+    // No-args constructor
+    public LoginRequest() {
+    }
+
+    // All-args constructor
+    public LoginRequest(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    // Getters and Setters
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    // toString method
+
+    @Override
+    public String toString() {
+        return "LoginRequest{" +
+                "email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
+}
+package com.anvith.user_service.entity;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "USERS")
+public class User {
+
+    @Id
+    private String id;
+
+    private String password;
+    private String email;
+    private String role;
+    private String fullName;
+    private String mobile;
+
+    // No-args constructor
+    public User() {
+    }
+
+    // All-args constructor
+    public User(String id, String password, String email, String role, String fullName, String mobile) {
+        this.id = id;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.fullName = fullName;
+        this.mobile = mobile;
+    }
+
+    // Getters and Setters
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    // toString method
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", role='" + role + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", mobile='" + mobile + '\'' +
+                '}';
+    }
+}
+package com.anvith.user_service.repository;
+
+import com.anvith.user_service.entity.User;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+public interface UserRepository extends MongoRepository<User, String> {
+
+    User findByEmail(String email);
+
+}
+package com.anvith.user_service.service;
+
+import com.anvith.user_service.entity.User;
+import com.anvith.user_service.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class CustomerUserServiceImplementation implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(username);
+
+        if (user == null) {
+            throw new UsernameNotFoundException("User Not found " + username);
+        }
+
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
+    }
+}
+package com.anvith.user_service.service;
+
+import com.anvith.user_service.config.JwtProvider;
+import com.anvith.user_service.entity.User;
+import com.anvith.user_service.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestHeader;
+
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtProvider jwtProvider;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public User getUserProfile(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.err.println("Invalid Authorization header: " + authHeader); // Debug log
+            throw new IllegalArgumentException("Missing or invalid Authorization header");
+        }
+        String jwt = authHeader.substring(7).trim(); // Remove "Bearer " and trim spaces
+        System.out.println("Extracted JWT: " + jwt); // Debug log
+        String email = jwtProvider.getEmailFromJwtToken(jwt);
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        return user;
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User updateUserProfile(String authHeader, User updatedUser) throws Exception {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing or invalid Authorization header");
+        }
+        String jwt = authHeader.substring(7).trim();
+        String email = jwtProvider.getEmailFromJwtToken(jwt);
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new Exception("User not found");
+        }
+        if (updatedUser.getFullName() != null) user.setFullName(updatedUser.getFullName());
+        if (updatedUser.getMobile() != null) user.setMobile(updatedUser.getMobile());
+        if (updatedUser.getPassword() != null) user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        return userRepository.save(user);
+    }
+
+    public void deleteUser(String userId) throws Exception {
+        User user = userRepository.findById(userId).orElseThrow(() -> new Exception("User not found with ID: " + userId));
+        userRepository.delete(user);
+    }
+}
+server:
+  port: 8080
+
+spring:
+  application:
+    name: USER-SERVICE
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/USER
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.12</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.anvith</groupId>
+    <artifactId>user-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>user-service</name>
+    <description>User Service</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.5</spring-cloud.version>
+        <maven.compiler.source>20</maven.compiler.source>
+        <maven.compiler.target>20</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -15,26 +15,44 @@ public class Task {
     private String title;
     private String description;
     private String image;
-    private String assignedUserId; // Changed to String to match User.id
+    private List<String> assignedUserIds = new ArrayList<>();
     private List<String> tags = new ArrayList<>();
     private TaskStatus status;
     private LocalDateTime deadline;
     private LocalDateTime createdAt;
 
+    public String getCompletedByUserId() {
+        return completedByUserId;
+    }
+
+    public void setCompletedByUserId(String completedByUserId) {
+        this.completedByUserId = completedByUserId;
+    }
+
+    private String completedByUserId;
+
     public Task() {
     }
 
-    public Task(String id, String title, String description, String image, String assignedUserId,
-                List<String> tags, TaskStatus status, LocalDateTime deadline, LocalDateTime createdAt) {
+    public Task(String id, String title, String description, String image, List<String> tags, String completedByUserId, LocalDateTime createdAt, LocalDateTime deadline, TaskStatus status, List<String> assignedUserIds) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.image = image;
-        this.assignedUserId = assignedUserId;
         this.tags = tags;
-        this.status = status;
-        this.deadline = deadline;
+        this.completedByUserId = completedByUserId;
         this.createdAt = createdAt;
+        this.deadline = deadline;
+        this.status = status;
+        this.assignedUserIds = assignedUserIds;
+    }
+
+    public List<String> getAssignedUserIds() {
+        return assignedUserIds;
+    }
+
+    public void setAssignedUserIds(List<String> assignedUserIds) {
+        this.assignedUserIds = assignedUserIds;
     }
 
     public String getId() {
@@ -67,14 +85,6 @@ public class Task {
 
     public void setImage(String image) {
         this.image = image;
-    }
-
-    public String getAssignedUserId() {
-        return assignedUserId;
-    }
-
-    public void setAssignedUserId(String assignedUserId) {
-        this.assignedUserId = assignedUserId;
     }
 
     public List<String> getTags() {

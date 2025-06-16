@@ -1,14 +1,9 @@
-package com.anvith.submission_service.entity;
-
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+package com.anvith.task_service.entity;
 
 import java.time.LocalDateTime;
 
-@Document(collection = "SUBMISSIONS")
 public class Submission {
 
-    @Id
     private String id; // Changed from Long to String
 
     private String taskId;

@@ -10,22 +10,37 @@ public class Task {
     private String title;
     private String description;
     private String image;
-    private String assignedUserId;
+    private List<String> assignedUserIds = new ArrayList<>();
     private List<String> tags = new ArrayList<>();
     private TaskStatus status;
     private LocalDateTime deadline;
     private LocalDateTime createdAt;
 
+    public List<String> getAssignedUserIds() {
+        return assignedUserIds;
+    }
+
+    public void setAssignedUserIds(List<String> assignedUserIds) {
+        this.assignedUserIds = assignedUserIds;
+    }
+
     public Task() {
     }
 
-    public Task(String id, String title, String description, String image, String assignedUserId,
-                List<String> tags, TaskStatus status, LocalDateTime deadline, LocalDateTime createdAt) {
+    public Task(String id,
+                String description,
+                String title,
+                String image,
+                List<String> assignedUserIds,
+                List<String> tags,
+                TaskStatus status,
+                LocalDateTime deadline,
+                LocalDateTime createdAt) {
         this.id = id;
-        this.title = title;
         this.description = description;
+        this.title = title;
         this.image = image;
-        this.assignedUserId = assignedUserId;
+        this.assignedUserIds = assignedUserIds;
         this.tags = tags;
         this.status = status;
         this.deadline = deadline;
@@ -62,14 +77,6 @@ public class Task {
 
     public void setImage(String image) {
         this.image = image;
-    }
-
-    public String getAssignedUserId() {
-        return assignedUserId;
-    }
-
-    public void setAssignedUserId(String assignedUserId) {
-        this.assignedUserId = assignedUserId;
     }
 
     public List<String> getTags() {
