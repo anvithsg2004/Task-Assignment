@@ -2403,3 +2403,8 @@ public class TaskService {
         return taskHistoryRepository.findByTaskId(taskId);
     }
 }
+
+kubectl create secret generic mongodb-credentials `
+  --from-literal=uri-user="mongodb+srv://anvithsg2004:Ani%402004@cluster0.xf9on0f.mongodb.net/USER?retryWrites=true&w=majority" `
+  --from-literal=uri-task="mongodb+srv://anvithsg2004:Ani%402004@cluster0.xf9on0f.mongodb.net/TASK?retryWrites=true&w=majority" `
+  --from-literal=uri-submission="mongodb+srv://anvithsg2004:Ani%402004@cluster0.xf9on0f.mongodb.net/SUBMISSION?retryWrites=true&w=majority"
