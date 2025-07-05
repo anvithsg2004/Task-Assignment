@@ -6,18 +6,18 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://135.232.71.98:8085',
+        target: 'http://localhost:8085',
         changeOrigin: true,
-        secure: false, // Bypasses SSL verification
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
       '/auth': {
-        target: 'https://135.232.71.98:8085',
+        target: 'http://localhost:8085',
         changeOrigin: true,
-        secure: false, // Bypasses SSL verification
+        secure: false,
         rewrite: (path) => path.replace(/^\/auth/, '/auth'),
       },
     },
-    port: 5173, // Match Vite’s default port
+    port: 5173,
   },
 });
