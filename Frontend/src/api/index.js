@@ -29,9 +29,14 @@ api.interceptors.response.use(
   }
 );
 
+// export const authAPI = {
+//   signup: (userData) => api.post('/api/auth/signup', userData),
+//   signin: (credentials) => api.post('/api/auth/signin', credentials),
+// };
+
 export const authAPI = {
-  signup: (userData) => api.post('/api/auth/signup', userData),
-  signin: (credentials) => api.post('/api/auth/signin', credentials),
+  signup: (userData) => api.post('/auth/signup', userData),
+  signin: (credentials) => api.post('/auth/signin', credentials),
 };
 
 export const userAPI = {
