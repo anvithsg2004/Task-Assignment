@@ -5,8 +5,8 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version> <!-- Compatible with Spring Cloud 2023.0.5 -->
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>3.3.12</version> <!-- Update from 3.3.0 -->
+        <relativePath/>
     </parent>
     <groupId>com.example.ServiceRegistry</groupId>
     <artifactId>ServiceRegistry</artifactId>

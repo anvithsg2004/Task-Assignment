@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=build /app/target/submission-service-0.0.1-SNAPSHOT.jar .
 
-EXPOSE 8080
+EXPOSE 8082
 
 ENTRYPOINT ["java", "-jar", "submission-service-0.0.1-SNAPSHOT.jar"]

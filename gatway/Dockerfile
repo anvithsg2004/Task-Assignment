@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=build /app/target/gatway-0.0.1-SNAPSHOT.jar .
 
-EXPOSE 8080
+EXPOSE 8085
 
 ENTRYPOINT ["java", "-jar", "gatway-0.0.1-SNAPSHOT.jar"]

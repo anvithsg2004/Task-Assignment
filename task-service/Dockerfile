@@ -14,6 +14,6 @@ WORKDIR /app
 
 COPY --from=build /app/target/task-service-0.0.1-SNAPSHOT.jar .
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "task-service-0.0.1-SNAPSHOT.jar"]
