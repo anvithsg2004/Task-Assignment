@@ -17,4 +17,4 @@ eureka:
     fetch-registry: true
     register-with-eureka: true
     service-url:
-      defaultZone: https://eureka-service-18jt.onrender.com/eureka/
+      defaultZone: https://service-registry-6oua.onrender.com/eureka/
