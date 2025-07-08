@@ -75,7 +75,7 @@ export const taskAPI = {
   completeTask: (id) => api.put(`/api/tasks/complete/${id}`),
   deleteTask: (id) => api.delete(`/api/tasks/delete/${id}`),
   getTaskHistory: (taskId) => api.get(`/api/tasks/history/${taskId}`),
-  getMyTasks: (status) => api.get(`/api/tasks/my-tasks?status=${status}`),
+  getMyTasks: (status) => api.get(`/api/tasks/visible-tasks?status=${status}`),
 };
 
 export const submissionAPI = {
