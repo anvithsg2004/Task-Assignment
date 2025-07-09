@@ -77,24 +77,26 @@ const UserManagement = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">{user.fullName}</h3>
-                  <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
-                    user.role === 'ROLE_ADMIN' 
-                      ? 'bg-neon-cyan/20 text-neon-cyan' 
-                      : 'bg-neon-purple/20 text-neon-purple'
-                  }`}>
+                  <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${user.role === 'ROLE_ADMIN'
+                    ? 'bg-neon-cyan/20 text-neon-cyan'
+                    : 'bg-neon-purple/20 text-neon-purple'
+                    }`}>
                     {user.role === 'ROLE_ADMIN' ? 'Admin' : 'User'}
                   </span>
                 </div>
               </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleDeleteUser(user.id)}
-                className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-              </motion.button>
+
+              {user.role !== 'ROLE_ADMIN' && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleDeleteUser(user.id)}
+                  className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </motion.button>
+              )}
+
             </div>
 
             <div className="space-y-2">
