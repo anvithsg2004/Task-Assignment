@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
-@FeignClient(name = "USER-SERVICE", path = "/api/user")
+@FeignClient(name = "user-service-client", url = "https://user-service-hhho.onrender.com")
 public interface UserServiceClient {
 
-    @GetMapping("/profile")
+    @GetMapping("/api/user/profile")
     User getUserProfile(@RequestHeader("Authorization") String authHeader);
 
-    @GetMapping("/all")
+    @GetMapping("/api/user/all")
     List<User> getAllUsers();
 }

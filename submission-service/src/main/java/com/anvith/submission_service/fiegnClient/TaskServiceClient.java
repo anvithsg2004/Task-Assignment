@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "TASK-SERVICE")
+@FeignClient(name = "task-service-client", url = "https://task-service-j8cy.onrender.com")
 public interface TaskServiceClient {
 
     @PostMapping("/api/tasks/create-user")

@@ -9,50 +9,50 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "SUBMISSION-SERVICE", path = "/api/submission")
+@FeignClient(name = "submission-service-client", url = "https://submission-service-a04o.onrender.com")
 public interface SubmissionServiceClient {
 
-    @PostMapping("/submit-task")
+    @PostMapping("/api/submission/submit-task")
     Submission submitTask(
             @RequestParam String taskId,
             @RequestParam String gitHubLink,
             @RequestHeader("Authorization") String jwt
     );
 
-    @GetMapping("/get-all-submissions")
+    @GetMapping("/api/submission/get-all-submissions")
     Page<Submission> getAllSubmissions(
             @RequestHeader("Authorization") String jwt,
             Pageable pageable
     );
 
-    @GetMapping("/get-task-submissions-by-task-id/{taskId}")
+    @GetMapping("/api/submission/get-task-submissions-by-task-id/{taskId}")
     Page<Submission> getTaskSubmissionsByTaskId(
             @PathVariable("taskId") String taskId,
             @RequestHeader("Authorization") String jwt,
             Pageable pageable
     );
 
-    @PutMapping("/accept-decline-submission/{submissionId}")
+    @PutMapping("/api/submission/accept-decline-submission/{submissionId}")
     Submission acceptDeclineSubmission(
             @PathVariable("submissionId") String submissionId,
             @RequestParam("status") String status,
             @RequestHeader("Authorization") String jwt
     );
 
-    @PostMapping("/comment/{submissionId}")
+    @PostMapping("/api/submission/comment/{submissionId}")
     SubmissionComment addComment(
             @PathVariable("submissionId") String submissionId,
             @RequestParam("comment") String comment,
             @RequestHeader("Authorization") String jwt
     );
 
-    @GetMapping("/comments/{submissionId}")
+    @GetMapping("/api/submission/comments/{submissionId}")
     List<SubmissionComment> getCommentsBySubmissionId(
             @PathVariable("submissionId") String submissionId,
             @RequestHeader("Authorization") String jwt
     );
 
-    @GetMapping("/accepted-task-ids/{userId}")
+    @GetMapping("/api/submission/accepted-task-ids/{userId}")
     List<String> getAcceptedTaskIdsForUser(
             @PathVariable("userId") String userId,
             @RequestHeader("Authorization") String jwt
